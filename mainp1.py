@@ -5,7 +5,6 @@ from os.path import isfile, getsize
 conn = None
 cursor = None
 
-
 def connect_db(dbname):
     global conn, cursor
     if not isfile(dbname):
@@ -15,7 +14,6 @@ def connect_db(dbname):
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     conn.commit()
     return True
-
 
 def login_memu():
     operations = ["1. Login", "2. Register"]
@@ -33,18 +31,20 @@ def login_memu():
     else:
         oper = input("Incorrect input. Please select operation or enter 0 to exit: ")
 
-
 def signin(user, passw):  # Handle user signin here
     pass
-
-
+  
 def register():  # handle user registration here
     pass
 
 
 def main():
     exit_condition = True
+
     dbname = input("Welcome to this interface, here you can interact with our database system,\nplease enter your sqlite database path to continue: ")
+
+    print("Welcome to this interface, here you can interact with our database system,\nplease enter your sqlite database path to continue:")
+    dbname = input()
     while exit_condition:
         connectCheck = connect_db(dbname)
         if connectCheck == True:
@@ -55,7 +55,6 @@ def main():
             print("an error occured! please try again:")
             dbname = input()
             continue
-
 
 if __name__ == "__main__":
     main()
