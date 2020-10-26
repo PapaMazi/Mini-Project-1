@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import getpass
 from os.path import isfile, getsize
 
 conn = None
@@ -7,8 +8,8 @@ cursor = None
 
 def connect_db(dbname):
     global conn, cursor
-    if not isfile(dbname):
-        return False
+    #if not isfile(dbname):
+    #    return False
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
@@ -24,7 +25,7 @@ def login_menu():
         oper = input("Please select operation or enter 0 to exit: ")
         if oper == "1":
             user = input("Enter Username: ")
-            passw = input("Enter Password: ")  # NEED TO HIDE THIS. DO LATER
+            passw = getpass.getpass(prompt = "Enter Password: ")  # NEED TO HIDE THIS. DO LATER
             signin(user, passw)
             login_condition = False
         elif oper == "2":
