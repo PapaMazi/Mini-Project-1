@@ -129,7 +129,6 @@ def editpost(user, pid):
         usertasks(user)
 
 
-
 def main():
     exit_condition = True
 
