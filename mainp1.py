@@ -38,37 +38,44 @@ def login_menu():
             continue
 
 def usertasks(user):
-    task = input("""Select the task you would like to perform:\n
-                    (P) Post a question\n
-                    (S) Search for posts\n
-                    (O) Other post actions\n
-                    """)
-    if task == 'P':
-        #add code
-    if task == 'S':
-        #add code
-    if task =='O':
-        pid = input("Type the post id of the post you want to interact with")
-        post_task = input("""Select the post task you would like to perform:\n)
-                            (A) Answer a question\n
-                            (V) Vote on a post\n
-                            (M) Mark accepted answer (priviledged users only)\n
-                            (G) Give a badge to a user (priviledged users only)\n
-                            (T) Add a tag to a post (priviledged users only)\n
-                            (E) Edit the title or body of a post (priviledged users only)\n""")
-   
-    if task == 'A':
-        #add code
-    if task == 'V':
-        #add code
-    if task == 'M':
-        #add code
-    if task == 'G':
-        #add code
-    if task == 'T':
-        addtag(user, pid)
-    if task == 'E':
-        editpost(user, pid)
+    general_menu_condition = True
+    specific_menu_condition = True
+    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (O) Other post actions\n")
+    while general_menu_condition:
+        if task == 'P':
+            general_menu_condition = False
+        elif task == 'S':
+            general_menu_condition = False
+        elif task =='O':
+            general_menu_condition = False
+            pid = input("Type the post id of the post you want to interact with: ")
+            post_task = input("""Select the post task you would like to perform:\n 
+                                (A) Answer a question\n 
+                                (V) Vote on a post\n 
+                                (M) Mark accepted answer (priviledged users only)\n 
+                                (G) Give a badge to a user (priviledged users only)\n 
+                                (T) Add a tag to a post (priviledged users only)\n 
+                                (E) Edit the title or body of a post (priviledged users only)\n""")
+            while specific_menu_condition:
+                if task == 'A':
+                    specific_menu_condition = False
+                elif task == 'V':
+                    specific_menu_condition = False
+                elif task == 'M':
+                    specific_menu_condition = False
+                elif task == 'G':
+                    specific_menu_condition = False
+                elif task == 'T':
+                    specific_menu_condition = False
+                    addtag(user, pid)
+                elif task == 'E':
+                    specific_menu_condition = False
+                    editpost(user, pid)
+                else:
+                    post_task = input("you inputted an incorrect choice, please try again: ")
+        else:
+            task = input("you inputted an incorrect choice, please try again: ")
+            continue
 
 
 def signin(user, passw):  # Handle user signin here
@@ -79,9 +86,9 @@ def register():  # handle user registration here
 
 def checkprivileged(user):  #check if user is a  privileged user
     privileged_user = False
-    c.execute("SELECT uid FROM privileged")
-    rows = c.fetchone()
-    for elem in rows
+    cursor.execute("SELECT uid FROM privileged")
+    rows = cursor.fetchone()
+    for elem in rows:
         if elem[0] == user:
             priveleged_user = True
             break
@@ -97,7 +104,8 @@ def addtag(user, pid):
 
     else:  #add their tag to table
         tag = input("Type the tag you would like to add:\n")
-        c.execute("INSERT INTO tags VALUES (:pid , :tag)")
+        cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
+        conn.commit()
         print("Tag added successfully\n")
 
 
@@ -113,17 +121,17 @@ def editpost(user, pid):
         user_choice = input("Would you like to edit the title of this post? (Y) or (N)\n")
         if user_choice == 'Y':
             new_title = input("What would you like the new title to be?\n")
-            c.execute(""UPDATE posts 
-                        SET title = :new_title 
-                        WHERE pid = :pid"")
+            c.execute("""UPDATE posts\ 
+                        SET title = :new_title\ 
+                        WHERE pid = :pid""")
             print("Title changed successfully\n")
 
         user_choice = input("Would you like to edit the body of this post? (Y) or (N)\n")
         if user_choice == 'Y':
             new_body = input("What would you like the new body to be?\n")
-            c.execute(""UPDATE posts 
-                        SET body = :new_body
-                        WHERE pid = :pid"")
+            c.execute("""UPDATE posts\ 
+                        SET body = :new_body\
+                        WHERE pid = :pid""")
             print("Body changed successfully\n")
 
         usertasks(user)
@@ -131,7 +139,6 @@ def editpost(user, pid):
 
 def main():
     exit_condition = True
-
     dbname = input("Welcome to this interface, here you can interact with our database system,\nplease enter your sqlite database path to continue: ")
     while exit_condition:
         connectCheck = connect_db(dbname)
