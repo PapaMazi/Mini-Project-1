@@ -1,13 +1,15 @@
 import sqlite3
 import time
 import getpass
+import sys
 from os.path import isfile, getsize
-
+#db_name = sys.argv[1]
 conn = None
 cursor = None
 
 def connect_db(dbname):
     global conn, cursor
+    
     #if not isfile(dbname):
     #    return False
     conn = sqlite3.connect(dbname)
@@ -25,7 +27,7 @@ def login_menu():
         oper = input("Please select operation or enter 0 to exit: ")
         if oper == "1":
             user = input("Enter Username: ")
-            passw = getpass.getpass(prompt = "Enter Password: ")  # NEED TO HIDE THIS. DO LATER
+            passw = getpass.getpass(prompt = "Enter Password: ") 
             signin(user, passw)
             login_condition = False
         elif oper == "2":
@@ -34,7 +36,7 @@ def login_menu():
         elif oper == "0":
             quit()
         else:
-            oper = input("Incorrect input. Please select operation or enter 0 to exit: ")
+            oper = input("Incorrect input. Please select an operation or enter 0 to exit: ")
             continue
 
 def usertasks(user):
@@ -42,33 +44,33 @@ def usertasks(user):
     specific_menu_condition = True
     task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (O) Other post actions\n")
     while general_menu_condition:
-        if task == 'P':
+        if task.upper() == 'P':
             general_menu_condition = False
-        elif task == 'S':
+        elif task.upper() == 'S':
             general_menu_condition = False
-        elif task =='O':
+        elif task.upper() =='O':
             general_menu_condition = False
-            pid = input("Type the post id of the post you want to interact with: ")
+            pid = input("Type the post id of the post you want to interact with: \n")
             post_task = input("""Select the post task you would like to perform:\n 
-                                (A) Answer a question\n 
-                                (V) Vote on a post\n 
-                                (M) Mark accepted answer (priviledged users only)\n 
-                                (G) Give a badge to a user (priviledged users only)\n 
-                                (T) Add a tag to a post (priviledged users only)\n 
-                                (E) Edit the title or body of a post (priviledged users only)\n""")
+(A): Answer a question\n 
+(V): Vote on a post\n 
+(M): Mark accepted answer (privileged users only)\n 
+(G): Give a badge to a user (privileged users only)\n 
+(T): Add a tag to a post (privileged users only)\n 
+(E): Edit the title or body of a post (privileged users only)\n""")
             while specific_menu_condition:
-                if task == 'A':
+                if post_task.upper() == 'A':
                     specific_menu_condition = False
-                elif task == 'V':
+                elif post_task.upper() == 'V':
                     specific_menu_condition = False
-                elif task == 'M':
+                elif post_task.upper() == 'M':
                     specific_menu_condition = False
-                elif task == 'G':
+                elif post_task.upper() == 'G':
                     specific_menu_condition = False
-                elif task == 'T':
+                elif post_task.upper() == 'T':
                     specific_menu_condition = False
                     addtag(user, pid)
-                elif task == 'E':
+                elif post_task.upper() == 'E':
                     specific_menu_condition = False
                     editpost(user, pid)
                 else:
@@ -78,16 +80,16 @@ def usertasks(user):
             continue
 
 
-def signin(user, passw):  # Handle user signin here
-    pass
+def signin(name, passw):  # Handle user signin here
+    cursor.execute(" SELECT name,pwd from users ")
+    rows = cursor.fetchone()
   
 def register():  # handle user registration here
     pass
 
 def checkprivileged(user):  #check if user is a  privileged user
     privileged_user = False
-    cursor.execute("SELECT uid FROM privileged")
-    rows = cursor.fetchone()
+    rows = cursor.execute("SELECT uid FROM privileged")
     for elem in rows:
         if elem[0] == user:
             priveleged_user = True
@@ -98,10 +100,9 @@ def checkprivileged(user):  #check if user is a  privileged user
 def addtag(user, pid):
     privileged_user = checkprivileged(user)
 
-    if priveleged_user == False:
+    if privileged_user == False:
         print("You are not allowed to use this function\n")
         usertasks(user)
-
     else:  #add their tag to table
         tag = input("Type the tag you would like to add:\n")
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
@@ -113,7 +114,7 @@ def editpost(user, pid):
 
     privileged_user = checkprivileged(user)
 
-    if priveleged_user == False:
+    if privileged_user == False:
         print("You are not allowed to use this function\n")
         usertasks(user)
 
@@ -121,17 +122,17 @@ def editpost(user, pid):
         user_choice = input("Would you like to edit the title of this post? (Y) or (N)\n")
         if user_choice == 'Y':
             new_title = input("What would you like the new title to be?\n")
-            c.execute("""UPDATE posts\ 
-                        SET title = :new_title\ 
-                        WHERE pid = :pid""")
+            c.execute(""" UPDATE posts 
+                        SET title = :new_title
+                        WHERE pid = :pid """)
             print("Title changed successfully\n")
 
         user_choice = input("Would you like to edit the body of this post? (Y) or (N)\n")
         if user_choice == 'Y':
             new_body = input("What would you like the new body to be?\n")
-            c.execute("""UPDATE posts\ 
-                        SET body = :new_body\
-                        WHERE pid = :pid""")
+            c.execute(""" UPDATE posts 
+                        SET body = :new_body
+                        WHERE pid = :pid """)
             print("Body changed successfully\n")
 
         usertasks(user)
@@ -150,8 +151,9 @@ def main():
             print("an error occured! please try again:")
             dbname = input()
             continue
-
-    login_menu()
+        
+    usertasks("u001")
+    #login_menu()
 
 if __name__ == "__main__":
     main()
