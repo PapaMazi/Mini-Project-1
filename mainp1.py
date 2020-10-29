@@ -37,11 +37,96 @@ def login_menu():
             oper = input("Incorrect input. Please select operation or enter 0 to exit: ")
             continue
 
+def usertasks(user):
+    task = input("""Select the task you would like to perform:\n
+                    (P) Post a question\n
+                    (S) Search for posts\n
+                    (O) Other post actions\n
+                    """)
+    if task == 'P':
+        #add code
+    if task == 'S':
+        #add code
+    if task =='O':
+        pid = input("Type the post id of the post you want to interact with")
+        post_task = input("""Select the post task you would like to perform:\n)
+                            (A) Answer a question\n
+                            (V) Vote on a post\n
+                            (M) Mark accepted answer (priviledged users only)\n
+                            (G) Give a badge to a user (priviledged users only)\n
+                            (T) Add a tag to a post (priviledged users only)\n
+                            (E) Edit the title or body of a post (priviledged users only)\n""")
+   
+    if task == 'A':
+        #add code
+    if task == 'V':
+        #add code
+    if task == 'M':
+        #add code
+    if task == 'G':
+        #add code
+    if task == 'T':
+        addtag(user, pid)
+    if task == 'E':
+        editpost(user, pid)
+
+
 def signin(user, passw):  # Handle user signin here
     pass
   
 def register():  # handle user registration here
     pass
+
+def checkprivileged(user):  #check if user is a  privileged user
+    privileged_user = False
+    c.execute("SELECT uid FROM privileged")
+    rows = c.fetchone()
+    for elem in rows
+        if elem[0] == user:
+            priveleged_user = True
+            break
+
+    return privileged_user
+
+def addtag(user, pid):
+    privileged_user = checkprivileged(user)
+
+    if priveleged_user == False:
+        print("You are not allowed to use this function\n")
+        usertasks(user)
+
+    else:  #add their tag to table
+        tag = input("Type the tag you would like to add:\n")
+        c.execute("INSERT INTO tags VALUES (:pid , :tag)")
+        print("Tag added successfully\n")
+
+
+def editpost(user, pid):
+
+    privileged_user = checkprivileged(user)
+
+    if priveleged_user == False:
+        print("You are not allowed to use this function\n")
+        usertasks(user)
+
+    else:  #change title and/or body of post
+        user_choice = input("Would you like to edit the title of this post? (Y) or (N)\n")
+        if user_choice == 'Y':
+            new_title = input("What would you like the new title to be?\n")
+            c.execute(""UPDATE posts 
+                        SET title = :new_title 
+                        WHERE pid = :pid"")
+            print("Title changed successfully\n")
+
+        user_choice = input("Would you like to edit the body of this post? (Y) or (N)\n")
+        if user_choice == 'Y':
+            new_body = input("What would you like the new body to be?\n")
+            c.execute(""UPDATE posts 
+                        SET body = :new_body
+                        WHERE pid = :pid"")
+            print("Body changed successfully\n")
+
+        usertasks(user)
 
 
 def main():
