@@ -85,7 +85,19 @@ def signin(name, passw):  # Handle user signin here
     rows = cursor.fetchone()
   
 def register():  # handle user registration here
-    pass
+    usersList = []
+    user_id = input("Enter your user id in this format (ex: u001): ")
+    usersList.append(user_id)
+    user_name = input("Enter your name: ")
+    usersList.append(user_name)
+    user_city = input("Enter your city of residence: ")
+    user_password = getpass.getpass(prompt = "Enter Password: ")
+    usersList.append(user_password)
+    usersList.append(user_city)
+    cursor.execute(""" insert into users values (?,?, ?, ?, date('now')); """,usersList);
+    conn.commit()
+    
+    
 
 def checkprivileged(user):  #check if user is a  privileged user
     privileged_user = False
@@ -152,8 +164,8 @@ def main():
             dbname = input()
             continue
         
-    usertasks("u001")
-    #login_menu()
+    #usertasks("u001")
+    login_menu()
 
 if __name__ == "__main__":
     main()
