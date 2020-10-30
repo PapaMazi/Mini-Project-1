@@ -32,6 +32,7 @@ def login_menu():
             login_condition = False
         elif oper == "2":
             register()
+            print("user succesfully registered.")
             login_condition = False
         elif oper == "0":
             quit()
@@ -64,6 +65,7 @@ def usertasks(user):
                 elif post_task.upper() == 'V':
                     specific_menu_condition = False
                 elif post_task.upper() == 'M':
+                    mark_as_accepted(user, pid)
                     specific_menu_condition = False
                 elif post_task.upper() == 'G':
                     specific_menu_condition = False
@@ -81,8 +83,15 @@ def usertasks(user):
 
 
 def signin(name, passw):  # Handle user signin here
-    cursor.execute(" SELECT name,pwd from users ")
-    rows = cursor.fetchone()
+    verifyList = []
+    verifyList.append(name)
+    verifyList.append(passw)
+    cursor.execute(" select name from users WHERE name = ? AND pwd = ?;",verifyList)
+    if cursor.fetchone():
+        print("user login successful")
+    else:
+        print("user login unsuccessful")
+    
   
 def register():  # handle user registration here
     usersList = []
@@ -91,7 +100,7 @@ def register():  # handle user registration here
     user_name = input("Enter your name: ")
     usersList.append(user_name)
     user_city = input("Enter your city of residence: ")
-    user_password = getpass.getpass(prompt = "Enter Password: ")
+    user_password = getpass.getpass(prompt = "Enter Password (case-sensitive) : ")
     usersList.append(user_password)
     usersList.append(user_city)
     cursor.execute(""" insert into users values (?,?, ?, ?, date('now')); """,usersList);
@@ -102,6 +111,7 @@ def register():  # handle user registration here
 def checkprivileged(user):  #check if user is a  privileged user
     privileged_user = False
     rows = cursor.execute("SELECT uid FROM privileged")
+    rows = cursor.fetchall()
     for elem in rows:
         if elem[0] == user:
             priveleged_user = True
@@ -111,7 +121,6 @@ def checkprivileged(user):  #check if user is a  privileged user
 
 def addtag(user, pid):
     privileged_user = checkprivileged(user)
-
     if privileged_user == False:
         print("You are not allowed to use this function\n")
         usertasks(user)
@@ -120,6 +129,59 @@ def addtag(user, pid):
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
         conn.commit()
         print("Tag added successfully\n")
+
+def get_uid_from_name(name):
+    print(name)
+    cursor.execute("SELECT uid from users WHERE name = ?;", (name,))
+    uid = cursor.fetchone()
+    return uid
+
+def mark_as_accepted(user, pid):
+    accepted_condition = True
+    acceptedList = []
+    #uid = get_uid_from_name(user)
+    #print(uid)
+    privileged_user = checkprivileged(user)
+    print(privileged_user)
+    if privileged_user == False:
+        print("Access denied")
+        usertasks(user)
+    else:
+        while accepted_condition:
+            answerID = input("please select the answer ID you would like to be marked as accepted: ")
+            cursor.execute(" SELECT pid from answers WHERE pid = :answerID; ")
+            if cursor.fetchone():
+                cursor.execute(" SELECT theaid from questions WHERE pid = ?; ", pid)
+                if cursor.fetchone():
+                    double_check = input("this questions seems to already have an accepted answer, would you like to overwrite the current answer (y/n)?: ")
+                    if double_check.upper() == "Y":
+                        acceptedList.append(answerID)
+                        acceptedList.append(pid)
+                        cursor.execute(""" UPDATE questions 
+                        SET theaid = ?
+                        WHERE pid = ?; """,acceptedList)
+                        conn.commit()
+                        print("answer marked successfully")                        
+                    elif double_check.upper() == "N":
+                        break
+                    else:
+                        print("invalid input, please try again!")
+                        continue
+                else:
+                    acceptedList.append(answerID)
+                    acceptedList.append(pid)
+                    cursor.execute(""" UPDATE questions 
+                    SET theaid = ?
+                    WHERE pid = ?; """,acceptedList)
+                    conn.commit()
+                    print("answer marked successfully")
+            else:
+                print("the ID you provided does not correspond to an answer, try again!")
+                continue
+        
+        
+    
+
 
 
 def editpost(user, pid):
@@ -164,8 +226,8 @@ def main():
             dbname = input()
             continue
         
-    #usertasks("u001")
     login_menu()
+    usertasks("u069")
 
 if __name__ == "__main__":
     main()
