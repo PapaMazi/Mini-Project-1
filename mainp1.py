@@ -88,8 +88,12 @@ def usertasks(user):
             task = input("you inputted an incorrect choice, please try again: ")
             continue
 
+
 def search_posts():
-    tags = []
+    keywords = input("Please enter keywords separated by a comma: ")
+    keywords = keywords.split(", ")
+    for word in keywords:
+        print(word)
 
 
 def signin(name, passw):  # Handle user signin here
@@ -236,9 +240,9 @@ def main():
             dbname = input()
             continue
 
-    login_menu()
-    usertasks("u069")
-
+    # login_menu()
+    # usertasks("u069")
+    search_posts()  # test remove later
 
 if __name__ == "__main__":
     main()
