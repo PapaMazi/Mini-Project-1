@@ -1,6 +1,7 @@
 import sqlite3
 import time
 import getpass
+from random import randint
 import re
 import sys
 from os.path import isfile, getsize
@@ -32,8 +33,11 @@ def login_menu():
         if oper == "1":
             user = input("Enter Username: ")
             passw = getpass.getpass(prompt="Enter Password: ")
-            signin(user, passw)
-            login_condition = False
+            condition = signin(user, passw)
+            if condition == True:
+                login_condition = False
+            else:
+                continue
         elif oper == "2":
             register()
             print("user succesfully registered.")
@@ -41,7 +45,6 @@ def login_menu():
         elif oper == "0":
             quit()
         else:
-            oper = input("Incorrect input. Please select an operation or enter 0 to exit: ")
             continue
 
 
@@ -53,6 +56,7 @@ def usertasks(user):
     while general_menu_condition:
         if task.upper() == 'P':
             general_menu_condition = False
+            add_post(user)
         elif task.upper() == 'S':
             search_posts()
             general_menu_condition = False
@@ -96,7 +100,8 @@ def search_posts():
         print(word)
 
 
-def signin(name, passw):  # Handle user signin here
+def signin(name, passw): # Handle user signin here
+    sign_in_condition = True
     verifyList = []
     verifyList.append(name)
     verifyList.append(passw)
@@ -105,6 +110,8 @@ def signin(name, passw):  # Handle user signin here
         print("user login successful")
     else:
         print("user login unsuccessful")
+        sign_in_condition = False
+    return sign_in_condition
 
 
 def register():  # handle user registration here
@@ -132,7 +139,32 @@ def checkprivileged(user):  # check if user is a  privileged user
             # break
     return privileged_user
 
-
+def add_post(user):
+    postList = []
+    verifyexist = []
+    p_string = 'p'
+    post_title = input("Enter your post title: ")
+    post_body = input("Enter your post body: ")
+    new_id = randint(200,999)
+    new_id = p_string + str(new_id)
+    verifyexist.append(new_id)
+    cursor.execute(" SELECT pid from posts WHERE pid = ?; ", verifyexist)
+    if cursor.fetchone():
+        new_id = randint(200,999)
+        new_id = p_string + str(new_id)
+    else:
+        pass    
+    postList.append(new_id)
+    postList.append(post_title)
+    postList.append(post_body)
+    postList.append(user)    
+    cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
+    conn.commit()
+    print("post successfully added")
+    
+    
+    
+    
 def addtag(user, pid):
     privileged_user = checkprivileged(user)
     if privileged_user == False:
@@ -240,9 +272,9 @@ def main():
             dbname = input()
             continue
 
-    # login_menu()
-    # usertasks("u069")
-    search_posts()  # test remove later
+    login_menu()
+    usertasks("u069")
+    #search_posts()  # test remove later
 
 if __name__ == "__main__":
     main()
