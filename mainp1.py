@@ -103,7 +103,10 @@ def search_posts():  # '2. Search for posts'
     if not pids:  # if pids[] is empty
         print("Couldn't find any matches")
     else:  # if pids[] not empty then:
-        pids = list(dict.fromkeys(pids)) #removes duplicates
+        pid_count = {i:pids.count(i) for i in pids}
+        print(pid_count)
+        # pids = list(dict.fromkeys(pids)) #removes duplicates
+        print(pids)
         for pid in pids:
             cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid,))  # fetches results
             result = cursor.fetchall()
