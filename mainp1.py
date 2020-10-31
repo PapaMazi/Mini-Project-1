@@ -2,6 +2,7 @@ import sqlite3
 import time
 import getpass
 from random import randint
+from prettytable import PrettyTable
 import re
 import sys
 from os.path import isfile, getsize
@@ -92,6 +93,8 @@ def usertasks(user):
 
 
 def search_posts():  # '2. Search for posts'
+    # TODO: implement case insensitivity
+    # TODO: implement parital matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
     keywords = input("Please enter keywords separated by a comma: ")
     keywords = keywords.split(", ")
     posts = cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
@@ -107,14 +110,23 @@ def search_posts():  # '2. Search for posts'
     if not pids:  # if pids[] is empty
         print("Couldn't find any matches")
     else:  # if pids[] not empty then:
-        pid_count = {i:pids.count(i) for i in pids}
-        print(pid_count)
-        # pids = list(dict.fromkeys(pids)) #removes duplicates
-        print(pids)
-        for pid in pids:
-            cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid,))  # fetches results
-            result = cursor.fetchall()
-            print(result)  # print results
+        pid_count = {i:pids.count(i) for i in pids}  #counts # https://stackoverflow.com/questions/23240969/python-count-repeated-elements-in-the-list/23240989
+        pid_count = sorted(pid_count.items(), key=lambda v: v[1], reverse=True)  #orders based on # of kw  # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
+        results = []
+        for pid in pid_count:
+            cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid[0],))  # fetches results
+            results.append(cursor.fetchall())
+        print_results(results)  # print results
+
+
+def print_results(data):  # handle printing search results here
+    # TODO: implement 'votes' and 'answers' in search results
+    # table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
+    table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster'])
+
+    for i in data:  # prints data in table format
+        table.add_row(i[0])
+    print(table)
 
 
 def signin(name, passw): # Handle user signin here
@@ -180,13 +192,6 @@ def add_post(user):
     conn.commit()
     print("post successfully added")
     
-    
-    
-    
-def addtag(user, pid):
-
-
-def addtag(user, pid):
 
 
 def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
@@ -296,8 +301,8 @@ def main():
             dbname = input()
             continue
 
-    login_menu()
-    usertasks("u069")
+    # login_menu()
+    # usertasks("u069")
     #search_posts()  # test remove later
 
     # login_menu()
