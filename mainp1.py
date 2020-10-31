@@ -301,10 +301,6 @@ def main():
     # usertasks("u069")
     search_posts()  # test remove later
 
-    # login_menu()
-    # usertasks("u069")
-
-    search_posts()  # test for search_posts remove later
 
 
 
