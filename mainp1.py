@@ -11,11 +11,9 @@ conn = None
 cursor = None
 
 
-def connect_db(dbname):
+def connect_db(dbname):  # init db cursor
     global conn, cursor
 
-    # if not isfile(dbname):
-    #    return False
     conn = sqlite3.connect(dbname)
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
@@ -93,11 +91,27 @@ def usertasks(user):
             continue
 
 
-def search_posts():
+def search_posts():  # '2. Search for posts'
     keywords = input("Please enter keywords separated by a comma: ")
     keywords = keywords.split(", ")
-    for word in keywords:
-        print(word)
+    posts = cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
+    posts = cursor.fetchall()
+    pids = []
+
+    for item in keywords:  # for each keyword the user entered
+        for row in posts:  # for each row from posts
+            for field in row:  # for each field in row
+                if item in field:  # check if keyword is in the field
+                    pids.append(row[0])  # if kw is in row then add pid to pid[]
+
+    if not pids:  # if pids[] is empty
+        print("Couldn't find any matches")
+    else:  # if pids[] not empty then:
+        pids = list(dict.fromkeys(pids)) #removes duplicates
+        for pid in pids:
+            cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid,))  # fetches results
+            result = cursor.fetchall()
+            print(result)  # print results
 
 
 def signin(name, passw): # Handle user signin here
@@ -139,6 +153,7 @@ def checkprivileged(user):  # check if user is a  privileged user
             # break
     return privileged_user
 
+
 def add_post(user):
     postList = []
     verifyexist = []
@@ -166,6 +181,12 @@ def add_post(user):
     
     
 def addtag(user, pid):
+
+
+def addtag(user, pid):
+
+
+def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
     privileged_user = checkprivileged(user)
     if privileged_user == False:
         print("You are not allowed to use this function\n")
@@ -184,7 +205,7 @@ def get_uid_from_name(name):
     return uid
 
 
-def mark_as_accepted(user, pid):
+def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accepted'
     accepted_condition = True
     acceptedList = []
     # uid = get_uid_from_name(user)
@@ -229,7 +250,7 @@ def mark_as_accepted(user, pid):
                 continue
 
 
-def editpost(user, pid):
+def editpost(user, pid):  # PU query 4 '4. Post Action-Edit'
     privileged_user = checkprivileged(user)
 
     if privileged_user == False:
@@ -275,6 +296,17 @@ def main():
     login_menu()
     usertasks("u069")
     #search_posts()  # test remove later
+
+    # login_menu()
+    # usertasks("u069")
+    search_posts()  # test remove later
+
+    # login_menu()
+    # usertasks("u069")
+
+    search_posts()  # test for search_posts remove later
+
+
 
 if __name__ == "__main__":
     main()
