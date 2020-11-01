@@ -94,8 +94,8 @@ def usertasks(user):
 
 
 def search_posts():  # '2. Search for posts'
-    # TODO: implement case insensitivity
-    # TODO: implement parital matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
+    # TODO: implement case insensitivity (done i THINK needs testing)
+    # TODO: implement parital matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384) (also done I THINK needs testing)
     keywords = input("Please enter keywords separated by a comma: ")
     keywords = keywords.split(", ")
     posts = cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
@@ -105,7 +105,7 @@ def search_posts():  # '2. Search for posts'
     for item in keywords:  # for each keyword the user entered
         for row in posts:  # for each row from posts
             for field in row:  # for each field in row
-                if item in field:  # check if keyword is in the field
+                if item.lower() in field.lower():  # check if keyword is in the field
                     pids.append(row[0])  # if kw is in row then add pid to pid[]
 
     if not pids:  # if pids[] is empty
@@ -122,28 +122,27 @@ def search_posts():  # '2. Search for posts'
 
 
 def print_results(data):  # handle printing search results here
-    # TODO: implement 'votes' and 'answers' in search results
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
 
-    j = 0
-    for i in data:  # prints data in table format
-        if j <= 4:
-            cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
-            i = i + cursor.fetchone()
-            cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
-            i = i + cursor.fetchone()
-            table.add_row(i)
-            # print(j)
-            j = j + 1
-    print(table)
-
+    # j = 0  # this code block prints 5 resutls at a time
     # for i in data:  # prints data in table format
-    #     cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
-    #     i = i + cursor.fetchone()
-    #     cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
-    #     i = i + cursor.fetchone()
-    #     table.add_row(i)
+    #     if j <= 4:
+    #         cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
+    #         i = i + cursor.fetchone()
+    #         cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
+    #         i = i + cursor.fetchone()
+    #         table.add_row(i)
+    #         # print(j)
+    #         j = j + 1
     # print(table)
+
+    for i in data:  # prints data in table format
+        cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
+        i = i + cursor.fetchone()
+        cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
+        i = i + cursor.fetchone()
+        table.add_row(i)
+    print(table)
 
     # for i in data:  # prints data in table format
     #     j = 0
