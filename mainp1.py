@@ -34,6 +34,7 @@ def login_menu():
             passw = getpass.getpass(prompt="Enter Password: ")
             condition = signin(user, passw)
             if condition == True:
+                usertasks(user)
                 login_condition = False
             else:
                 continue
@@ -115,18 +116,72 @@ def search_posts():  # '2. Search for posts'
         results = []
         for pid in pid_count:
             cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid[0],))  # fetches results
-            results.append(cursor.fetchall())
+            # results.append(cursor.fetchall())
+            results.append(cursor.fetchone())
         print_results(results)  # print results
 
 
 def print_results(data):  # handle printing search results here
     # TODO: implement 'votes' and 'answers' in search results
-    # table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
-    table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster'])
+    table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
 
+    j = 0
     for i in data:  # prints data in table format
-        table.add_row(i[0])
+        if j <= 4:
+            cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
+            i = i + cursor.fetchone()
+            cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
+            i = i + cursor.fetchone()
+            table.add_row(i)
+            # print(j)
+            j = j + 1
     print(table)
+
+    # for i in data:  # prints data in table format
+    #     cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
+    #     i = i + cursor.fetchone()
+    #     cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
+    #     i = i + cursor.fetchone()
+    #     table.add_row(i)
+    # print(table)
+
+    # for i in data:  # prints data in table format
+    #     j = 0
+    #     while j <= 5:
+    #         table.add_row(i[0])
+    #         j = j + 1
+    #         print(table)
+
+
+def add_answer(user, qpost):
+    postList = []
+    verifyexist = []
+    p_string = 'p'
+    post_title = input("Enter your post title: ")
+    post_body = input("Enter your post body: ")
+    new_id = randint(200,999)
+    new_id = p_string + str(new_id)
+    verifyexist.append(new_id)
+    cursor.execute(" SELECT pid from posts WHERE pid = ?; ", verifyexist)
+    if cursor.fetchone():
+        new_id = randint(200,999)
+        new_id = p_string + str(new_id)
+    else:
+        pass
+    postList.append(new_id)
+    postList.append(post_title)
+    postList.append(post_body)
+    postList.append(user)
+    cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
+    conn.commit()
+    questionList = []
+    questionList.append(new_id, qpost)
+    cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", questionList)
+    print("Answer successfully added")
+
+
+def add_vote(user, pid):
+    pass
 
 
 def signin(name, passw): # Handle user signin here
