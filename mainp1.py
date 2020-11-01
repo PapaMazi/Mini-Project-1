@@ -94,8 +94,8 @@ def usertasks(user):
 
 
 def search_posts():  # '2. Search for posts'
-    # TODO: implement case insensitivity (done i THINK needs testing)
-    # TODO: implement parital matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384) (also done I THINK needs testing)
+    # TODO: test case insensitivity
+    # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
     keywords = input("Please enter keywords separated by a comma: ")
     keywords = keywords.split(", ")
     posts = cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
@@ -122,7 +122,16 @@ def search_posts():  # '2. Search for posts'
 
 
 def print_results(data):  # handle printing search results here
+    # TODO: need to implement listing 5 results at a time
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
+
+    for i in data:  # prints data in table format (prints all results)
+        cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
+        i = i + cursor.fetchone()
+        cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
+        i = i + cursor.fetchone()
+        table.add_row(i)
+    print(table)
 
     # j = 0  # this code block prints 5 resutls at a time
     # for i in data:  # prints data in table format
@@ -135,21 +144,6 @@ def print_results(data):  # handle printing search results here
     #         # print(j)
     #         j = j + 1
     # print(table)
-
-    for i in data:  # prints data in table format
-        cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
-        i = i + cursor.fetchone()
-        cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
-        i = i + cursor.fetchone()
-        table.add_row(i)
-    print(table)
-
-    # for i in data:  # prints data in table format
-    #     j = 0
-    #     while j <= 5:
-    #         table.add_row(i[0])
-    #         j = j + 1
-    #         print(table)
 
 
 def add_answer(user, qpost):
@@ -180,8 +174,14 @@ def add_answer(user, qpost):
 
 
 def add_vote(user, pid):
-    pass
-
+    cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
+    votes = cursor.fetchone()
+    vno = votes[0] + 1
+    # print(votes[0])
+    vote_list = [pid, vno, user]
+    print(vote_list)
+    cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
+    conn.commit()
 
 def signin(name, passw): # Handle user signin here
     sign_in_condition = True
@@ -361,8 +361,8 @@ def main():
 
     # login_menu()
     # usertasks("u069")
-    search_posts()  # test remove later
-
+    # search_posts()  # test remove later
+    add_vote("u069", "p020")
 
 
 
