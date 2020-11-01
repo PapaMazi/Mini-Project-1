@@ -254,7 +254,17 @@ def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
         print("You are not allowed to use this function\n")
         usertasks(user)
     else:  # add their tag to table
-        tag = input("Type the tag you would like to add:\n")
+        #check that tag does not already exist
+        tag_duplicate = True;
+        while tag_duplicate:
+            new_tag = input("Type the tag you would like to add:\n")
+            rows = cursor.execute("SELECT tag FROM tags")
+            rows = cursor.fetchall()
+            tag_duplicate = False
+            for elem in rows:
+                if upper(elem[0]) == upper(new_tag):
+                    tag_duplicate = True
+                    
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
         conn.commit()
         print("Tag added successfully\n")
