@@ -147,7 +147,7 @@ def print_results(data):  # handle printing search results here
     # print(table)
 
 
-def add_answer(user, qpost):
+def add_answer(user, qpost):  # allows user to add answer to qpost
     postList = []
     verifyexist = []
     p_string = 'p'
@@ -181,6 +181,7 @@ def add_vote(user, pid):  # allows user to add vote to pid
     vote_list = [pid, vno, user]
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
+    print("Vote successfully added")
 
 
 def signin(name, passw): # Handle user signin here
@@ -246,7 +247,6 @@ def add_post(user):
     conn.commit()
     print("post successfully added")
     
-
 
 def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
     privileged_user = checkprivileged(user)
@@ -359,7 +359,7 @@ def main():
     # usertasks("u069")
     # search_posts()  # test remove later
     # add_vote("u069", "p020")  # test remove later
-    add_answer("u069", "p001")
+    # add_answer("u069", "p001")  # test remove later
 
 
 if __name__ == "__main__":
