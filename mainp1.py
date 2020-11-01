@@ -94,6 +94,7 @@ def usertasks(user):
 
 
 def search_posts():  # '2. Search for posts'
+    # TODO: test if results are ordered based on #of kw
     # TODO: test case insensitivity
     # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
     keywords = input("Please enter keywords separated by a comma: ")
@@ -167,21 +168,20 @@ def add_answer(user, qpost):
     postList.append(user)
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
-    questionList = []
-    questionList.append(new_id, qpost)
+    questionList = [new_id, qpost]
     cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", questionList)
+    conn.commit()
     print("Answer successfully added")
 
 
-def add_vote(user, pid):
+def add_vote(user, pid):  # allows user to add vote to pid
     cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
     votes = cursor.fetchone()
     vno = votes[0] + 1
-    # print(votes[0])
     vote_list = [pid, vno, user]
-    print(vote_list)
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
+
 
 def signin(name, passw): # Handle user signin here
     sign_in_condition = True
@@ -357,13 +357,9 @@ def main():
 
     # login_menu()
     # usertasks("u069")
-    #search_posts()  # test remove later
-
-    # login_menu()
-    # usertasks("u069")
     # search_posts()  # test remove later
-    add_vote("u069", "p020")
-
+    # add_vote("u069", "p020")  # test remove later
+    add_answer("u069", "p001")
 
 
 if __name__ == "__main__":
