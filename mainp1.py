@@ -2,7 +2,7 @@ import sqlite3
 import time
 import getpass
 from random import randint
-from prettytable import PrettyTable
+#from prettytable import PrettyTable
 import re
 import sys
 from os.path import isfile, getsize
@@ -16,6 +16,7 @@ def connect_db(dbname):  # init db cursor
     global conn, cursor
 
     conn = sqlite3.connect(dbname)
+    conn.row_factory = lambda cursor, row: row[0]
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     conn.commit()
@@ -79,6 +80,7 @@ def usertasks(user):
                     mark_as_accepted(user, pid)
                     specific_menu_condition = False
                 elif post_task.upper() == 'G':
+                    give_badge(user, pid)
                     specific_menu_condition = False
                 elif post_task.upper() == 'T':
                     specific_menu_condition = False
@@ -246,6 +248,35 @@ def add_post(user):
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     print("post successfully added")
+
+def check_badge(badgename):
+    badgeList = [badgename]
+    cursor.execute("SELECT bname from badges WHERE bname = ?;", badgeList)
+    if cursor.fetchone():
+        return True
+    else:
+        return False
+    
+    
+def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
+    badge_name = input("please input the badge name you would like to give: ")
+    badge_condition = True
+    while badge_condition:
+        if check_badge(badge_name) == True:
+            badge_condition = False
+        else:
+            badge_name = input("you inputted an incorrect badge name, please try again: ")
+            continue
+    
+    checkList = [pid]
+    cursor.execute(" SELECT poster from posts WHERE pid = ?;", checkList)
+    poster = cursor.fetchone()
+    checkList = [poster, badge_name]
+    cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
+    conn.commit()
+    print("badge succesfully added")
+    
+    
     
 
 def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
@@ -357,6 +388,7 @@ def main():
 
     # login_menu()
     # usertasks("u069")
+    give_badge("u069","p004")
     # search_posts()  # test remove later
     # add_vote("u069", "p020")  # test remove later
     # add_answer("u069", "p001")  # test remove later
