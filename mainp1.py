@@ -16,7 +16,7 @@ def connect_db(dbname):  # init db cursor
     global conn, cursor
 
     conn = sqlite3.connect(dbname)
-    conn.row_factory = lambda cursor, row: row[0]
+    conn.row_factory = lambda cursor, row: row
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     conn.commit()
@@ -49,53 +49,56 @@ def login_menu():
             continue
 
 
+def specific_menu(user, pid):
+    specific_menu_condition = True
+    post_task = input("""Select the post task you would like to perform:\n 
+    (A): Answer a question\n 
+    (V): Vote on a post\n 
+    (M): Mark accepted answer (privileged users only)\n 
+    (G): Give a badge to a user (privileged users only)\n 
+    (T): Add a tag to a post (privileged users only)\n 
+    (E): Edit the title or body of a post (privileged users only)\n""")
+    while specific_menu_condition:
+        if post_task.upper() == 'A':
+            specific_menu_condition = False
+        elif post_task.upper() == 'V':
+            specific_menu_condition = False
+        elif post_task.upper() == 'M':
+            mark_as_accepted(user, pid)
+            specific_menu_condition = False
+        elif post_task.upper() == 'G':
+            give_badge(user, pid)
+            specific_menu_condition = False
+        elif post_task.upper() == 'T':
+            specific_menu_condition = False
+            addtag(user, pid)
+        elif post_task.upper() == 'E':
+            specific_menu_condition = False
+            editpost(user, pid)
+        else:
+            post_task = input("you inputted an incorrect choice, please try again: ")
+
+
 def usertasks(user):
     general_menu_condition = True
-    specific_menu_condition = True
-    task = input(
-        "Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (O) Other post actions\n")
+    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (O) Other post actions\n")
     while general_menu_condition:
         if task.upper() == 'P':
-            general_menu_condition = False
             add_post(user)
+            general_menu_condition = False
         elif task.upper() == 'S':
-            search_posts()
+            search_posts(user)
             general_menu_condition = False
         elif task.upper() == 'O':
-            general_menu_condition = False
             pid = input("Type the post id of the post you want to interact with: \n")
-            post_task = input("""Select the post task you would like to perform:\n 
-(A): Answer a question\n 
-(V): Vote on a post\n 
-(M): Mark accepted answer (privileged users only)\n 
-(G): Give a badge to a user (privileged users only)\n 
-(T): Add a tag to a post (privileged users only)\n 
-(E): Edit the title or body of a post (privileged users only)\n""")
-            while specific_menu_condition:
-                if post_task.upper() == 'A':
-                    specific_menu_condition = False
-                elif post_task.upper() == 'V':
-                    specific_menu_condition = False
-                elif post_task.upper() == 'M':
-                    mark_as_accepted(user, pid)
-                    specific_menu_condition = False
-                elif post_task.upper() == 'G':
-                    give_badge(user, pid)
-                    specific_menu_condition = False
-                elif post_task.upper() == 'T':
-                    specific_menu_condition = False
-                    addtag(user, pid)
-                elif post_task.upper() == 'E':
-                    specific_menu_condition = False
-                    editpost(user, pid)
-                else:
-                    post_task = input("you inputted an incorrect choice, please try again: ")
+            specific_menu(user, pid)
+            general_menu_condition = False
         else:
             task = input("you inputted an incorrect choice, please try again: ")
             continue
 
 
-def search_posts():  # '2. Search for posts'
+def search_posts(user):  # '2. Search for posts'
     # TODO: test if results are ordered based on #of kw
     # TODO: test case insensitivity
     # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
@@ -120,22 +123,45 @@ def search_posts():  # '2. Search for posts'
 
     if not pids:  # if pids[] is empty
         print("Couldn't find any matches")
+        search_posts()
     else:  # if pids[] not empty then:
         pid_count = {i:pids.count(i) for i in pids}  #counts # https://stackoverflow.com/questions/23240969/python-count-repeated-elements-in-the-list/23240989
         pid_count = sorted(pid_count.items(), key=lambda v: v[1], reverse=True)  #orders based on # of kw  # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
         results = []
         for pid in pid_count:
             cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid[0],))  # fetches results
-            # results.append(cursor.fetchall())
             results.append(cursor.fetchone())
-        print_results(results)  # print results
+        print_results(results, user)  # print results
 
 
-def print_results(data):  # handle printing search results here
-    # TODO: need to implement listing 5 results at a time
+def print_results(data, user):  # handle printing search results here
+    # TODO: test listing 5 results at a time
     # TODO: need to implement selection of posts
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
 
+    check = True
+    while check:
+        for i in range(0, len(data), 5):
+            print_table(data[i:i+5])
+            ind = input("Would you like to see next page? (Y/N) or enter pid: ")
+            if ind.lower() == "y":
+                continue
+            elif ind.lower() == 'n':
+                break
+                # check = False
+            elif re.match('[a-zA-Z]{1}\d{3}', ind):
+                specific_menu(user, ind)
+                continue
+            else:
+                ind = input("Invalid Input. Please try again: ")
+                check = True
+            if i >= (len(data) - 5):
+                break
+        check = False
+
+
+def print_table(data):
+    table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
     for i in data:  # prints data in table format (prints all results)
         cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
         i = i + cursor.fetchone()
@@ -143,18 +169,6 @@ def print_results(data):  # handle printing search results here
         i = i + cursor.fetchone()
         table.add_row(i)
     print(table)
-
-    # j = 0  # this code block prints 5 resutls at a time
-    # for i in data:  # prints data in table format
-    #     if j <= 4:
-    #         cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
-    #         i = i + cursor.fetchone()
-    #         cursor.execute('SELECT count(qid) FROM answers WHERE qid =?', (i[0],))  # gets number of answers if question
-    #         i = i + cursor.fetchone()
-    #         table.add_row(i)
-    #         # print(j)
-    #         j = j + 1
-    # print(table)
 
 
 def add_answer(user, qpost):  # allows user to add answer to qpost
@@ -396,7 +410,7 @@ def main():
 
     login_menu()
     # usertasks("u069")
-    give_badge("u069","p004")
+    # give_badge("u069","p004")
     # search_posts()  # test remove later
     # add_vote("u069", "p020")  # test remove later
     # add_answer("u069", "p001")  # test remove later
