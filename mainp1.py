@@ -14,13 +14,30 @@ cursor = None
 
 def connect_db(dbname):  # init db cursor
     global conn, cursor
-
     conn = sqlite3.connect(dbname)
     conn.row_factory = lambda cursor, row: row
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     conn.commit()
     return True
+
+
+def main_menu(user):
+    general_menu_condition = True
+    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n or enter 0 to exit")
+    while general_menu_condition:
+        if task.upper() == 'P':
+            add_question(user)
+            general_menu_condition = False
+        elif task.upper() == 'S':
+            search_posts(user)
+            #call specific_menu from search posts with selected pid
+            general_menu_condition = False
+        elif task.upper() == '0':
+            quit()
+        else:
+            task = input("you inputted an incorrect choice, please try again: ")
+            continue
 
 
 def login_menu(): # user can log in or register for program
@@ -49,6 +66,7 @@ def login_menu(): # user can log in or register for program
         else:
             continue
 
+
 def sign_in(name, passw): # user signs into program
     sign_in_condition = True
     verifyList = []
@@ -62,19 +80,6 @@ def sign_in(name, passw): # user signs into program
         sign_in_condition = False
     return sign_in_condition
 
-def register():  # user registers for program
-    usersList = []
-    user_id = input("Enter your user id in this format (ex: u001): ")
-    usersList.append(user_id)
-    user_name = input("Enter your name: ")
-    usersList.append(user_name)
-    user_city = input("Enter your city of residence: ")
-    user_password = getpass.getpass(prompt="Enter Password (case-sensitive) : ")
-    usersList.append(user_password)
-    usersList.append(user_city)
-    cursor.execute(""" insert into users values (?,?, ?, ?, date('now')); """, usersList);
-    conn.commit()
-    return user_id
 
 def specific_menu(user, pid):
     specific_menu_condition = True
@@ -110,28 +115,40 @@ def specific_menu(user, pid):
         else:
             post_task = input("you inputted an incorrect choice, please try again: ")
 
-def main_menu(user):
-    general_menu_condition = True
-    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n or enter 0 to exit")
-    while general_menu_condition:
-        if task.upper() == 'P':
-            add_question(user)
-            general_menu_condition = False
-        elif task.upper() == 'S':
-            search_posts(user)
-            #call specific_menu from search posts with selected pid
-            general_menu_condition = False
-        elif task.upper() == '0':
-            quit()
-        else:
-            task = input("you inputted an incorrect choice, please try again: ")
-            continue
 
-def get_uid_from_name(name):
+def register():  # user registers for program
+    usersList = []
+    user_id = input("Enter your user id in this format (ex: u001): ")
+    usersList.append(user_id)
+    user_name = input("Enter your name: ")
+    usersList.append(user_name)
+    user_city = input("Enter your city of residence: ")
+    user_password = getpass.getpass(prompt="Enter Password (case-sensitive) : ")
+    usersList.append(user_password)
+    usersList.append(user_city)
+    cursor.execute(""" insert into users values (?,?, ?, ?, date('now')); """, usersList);
+    conn.commit()
+    return user_id
+
+
+def get_uid_from_name(name): # get the uid for a given username
     print(name)
     cursor.execute("SELECT uid from users WHERE name = ?;", (name,))
     uid = cursor.fetchone()
     return uid
+
+
+def check_privileged(user):  # check if user is a privileged user
+    privileged_user = False
+    rows = cursor.execute("SELECT uid FROM privileged")
+    rows = cursor.fetchall()
+    for elem in rows:
+        if elem[0] == user:
+            priveleged_user = True
+            return priveleged_user
+            # break
+    return privileged_user
+
 
 def add_question(user): # U query 1 '1. Post a question'
     postList = []
@@ -155,6 +172,7 @@ def add_question(user): # U query 1 '1. Post a question'
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     print("post successfully added")
+
 
 def search_posts(user): # U query 2 '2. Search for posts'
     # TODO: test if results are ordered based on #of kw
@@ -191,6 +209,7 @@ def search_posts(user): # U query 2 '2. Search for posts'
             results.append(cursor.fetchone())
         print_results(results, user)  # print results
 
+
 def print_results(data, user):  # handle printing search results here
     # TODO: test listing 5 results at a time
     # TODO: need to implement selection of posts
@@ -216,6 +235,7 @@ def print_results(data, user):  # handle printing search results here
                 break
         check = False
 
+
 def print_table(data):
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
     for i in data:  # prints data in table format (prints all results)
@@ -225,6 +245,7 @@ def print_table(data):
         i = i + cursor.fetchone()
         table.add_row(i)
     print(table)
+
 
 def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     postList = []
@@ -262,41 +283,6 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
     conn.commit()
     print("Vote successfully added")
 
-def check_privileged(user):  # check if user is a privileged user
-    privileged_user = False
-    rows = cursor.execute("SELECT uid FROM privileged")
-    rows = cursor.fetchall()
-    for elem in rows:
-        if elem[0] == user:
-            priveleged_user = True
-            return priveleged_user
-            # break
-    return privileged_user
-
-
-def add_post(user):
-    postList = []
-    verifyexist = []
-    p_string = 'p'
-    post_title = input("Enter your post title: ")
-    post_body = input("Enter your post body: ")
-    new_id = randint(200,999)
-    new_id = p_string + str(new_id)
-    verifyexist.append(new_id)
-    cursor.execute(" SELECT pid from posts WHERE pid = ?; ", verifyexist)
-    if cursor.fetchone():
-        new_id = randint(200,999)
-        new_id = p_string + str(new_id)
-    else:
-        pass    
-    postList.append(new_id)
-    postList.append(post_title)
-    postList.append(post_body)
-    postList.append(user)    
-    cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
-    conn.commit()
-    print("post successfully added")
-
 
 def check_badge(badgename):
     badgeList = [badgename]
@@ -305,45 +291,6 @@ def check_badge(badgename):
         return True
     else:
         return False
-    
-    
-def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
-    badge_name = input("please input the badge name you would like to give: ")
-    badge_condition = True
-    while badge_condition:
-        if check_badge(badge_name) == True:
-            badge_condition = False
-        else:
-            badge_name = input("you inputted an incorrect badge name, please try again: ")
-            continue
-    
-    checkList = [pid]
-    cursor.execute(" SELECT poster from posts WHERE pid = ?;", checkList)
-    poster = cursor.fetchone()
-    checkList = [poster, badge_name]
-    cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
-    conn.commit()
-    print("badge succesfully added")
-    
-
-def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
-    privileged_user = checkprivileged(user)
-    if privileged_user == False:
-        print("You are not allowed to use this function\n")
-        usertasks(user)
-    else:  # add their tag to table
-        tag = input("Type the tag you would like to add:\n")
-        cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
-        conn.commit()
-        print("Tag added successfully\n")
-
-
-def get_uid_from_name(name):
-    print(name)
-    cursor.execute("SELECT uid from users WHERE name = ?;", (name,))
-    uid = cursor.fetchone()
-    return uid
-
 
 
 def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accepted'
@@ -351,7 +298,7 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
     acceptedList = []
     uid = get_uid_from_name(user)
     print(uid)
-    privileged_user = checkprivileged(user)
+    privileged_user = check_privileged(user)
     print(privileged_user)
     if privileged_user == False:
         print("You are not allowed to use this function\n")
@@ -359,9 +306,11 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
     else:
         while accepted_condition:
             answerID = input("please select the answer ID you would like to be marked as accepted: ")
-            cursor.execute(" SELECT pid from answers WHERE pid = :answerID; ")
+            answerList = [answerID]
+            cursor.execute(" SELECT pid from answers WHERE pid = ?; ",answerList)
             if cursor.fetchone():
-                cursor.execute(" SELECT theaid from questions WHERE pid = ?; ", pid)
+                pidList = [pid]
+                cursor.execute(" SELECT theaid from questions WHERE pid = ?; ", pidList)
                 if cursor.fetchone():
                     double_check = input(
                         "this questions seems to already have an accepted answer, would you like to overwrite the current answer (y/n)?: ")
@@ -373,6 +322,7 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
                         WHERE pid = ?; """, acceptedList)
                         conn.commit()
                         print("answer marked successfully")
+                        accepted_condition = False
                     elif double_check.upper() == "N":
                         break
                     else:
@@ -386,17 +336,13 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
                     WHERE pid = ?; """, acceptedList)
                     conn.commit()
                     print("answer marked successfully")
+                    accepted_condition = False
             else:
                 print("the ID you provided does not correspond to an answer, try again!")
                 continue
-
-
+    
+    
 def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
-    privileged_user = check_privileged(user)
-    if privileged_user == False:
-        print("You are not allowed to use this function\n")
-        specific_menu(user, pid)
-
     badge_name = input("please input the badge name you would like to give: ")
     badge_condition = True
     while badge_condition:
@@ -413,15 +359,6 @@ def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
     cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
     conn.commit()
     print("badge succesfully added")
-    specific_menu(user, pid)
-
-def check_badge(badgename):
-    badgeList = [badgename]
-    cursor.execute("SELECT bname from badges WHERE bname = ?;", badgeList)
-    if cursor.fetchone():
-        return True
-    else:
-        return False
     
 
 def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
@@ -447,7 +384,6 @@ def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
     specific_menu(user, pid)
 
 
-
 def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
     privileged_user = check_privileged(user)
     if privileged_user == False:
@@ -458,7 +394,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
         user_choice = input("Would you like to edit the title of this post? (Y) or (N)\n")
         if user_choice == 'Y':
             new_title = input("What would you like the new title to be?\n")
-            titleList [new_title, pid]
+            titleList = [new_title, pid]
             cursor.execute(""" UPDATE posts 
                         SET title = ?
                         WHERE pid = ? ;""", titleList)
@@ -475,6 +411,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             print("Body changed successfully\n")
 
     specific_menu(user, pid)
+
 
 def main():
     exit_condition = True
@@ -493,7 +430,7 @@ def main():
             continue
 
     #login_menu()
-    mark_as_accepted("u069","p004")
+    mark_as_accepted("u069","p021")
     # usertasks("u069")
     # give_badge("u069","p004")
     # search_posts()  # test remove later
