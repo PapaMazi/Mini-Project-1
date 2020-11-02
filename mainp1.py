@@ -73,13 +73,16 @@ def usertasks(user):
             while specific_menu_condition:
                 if post_task.upper() == 'A':
                     specific_menu_condition = False
+                    add_answer(user, pid)
                 elif post_task.upper() == 'V':
                     specific_menu_condition = False
+                    add_vote(user, pid)
                 elif post_task.upper() == 'M':
-                    mark_as_accepted(user, pid)
                     specific_menu_condition = False
+                    mark_as_accepted(user, pid)
                 elif post_task.upper() == 'G':
                     specific_menu_condition = False
+                    givebadge(user, pid)
                 elif post_task.upper() == 'T':
                     specific_menu_condition = False
                     addtag(user, pid)
@@ -229,6 +232,9 @@ def checkprivileged(user):  # check if user is a  privileged user
     return privileged_user
 
 
+def givebadge(user, pid):
+    pass
+
 def add_post(user):
     postList = []
     verifyexist = []
@@ -259,7 +265,17 @@ def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
         print("You are not allowed to use this function\n")
         usertasks(user)
     else:  # add their tag to table
-        tag = input("Type the tag you would like to add:\n")
+        #check that tag does not already exist
+        tag_duplicate = True;
+        while tag_duplicate:
+            new_tag = input("Type the tag you would like to add:\n")
+            rows = cursor.execute("SELECT tag FROM tags")
+            rows = cursor.fetchall()
+            tag_duplicate = False
+            for elem in rows:
+                if elem[0].upper() == new_tag.upper():
+                    tag_duplicate = True
+
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
         conn.commit()
         print("Tag added successfully\n")
