@@ -16,6 +16,7 @@ def connect_db(dbname):  # init db cursor
     global conn, cursor
 
     conn = sqlite3.connect(dbname)
+    conn.row_factory = lambda cursor, row: row[0]
     cursor = conn.cursor()
     cursor.execute(' PRAGMA foreign_keys=ON; ')
     conn.commit()
@@ -73,16 +74,14 @@ def usertasks(user):
             while specific_menu_condition:
                 if post_task.upper() == 'A':
                     specific_menu_condition = False
-                    add_answer(user, pid)
                 elif post_task.upper() == 'V':
                     specific_menu_condition = False
-                    add_vote(user, pid)
                 elif post_task.upper() == 'M':
-                    specific_menu_condition = False
                     mark_as_accepted(user, pid)
-                elif post_task.upper() == 'G':
                     specific_menu_condition = False
-                    givebadge(user, pid)
+                elif post_task.upper() == 'G':
+                    give_badge(user, pid)
+                    specific_menu_condition = False
                 elif post_task.upper() == 'T':
                     specific_menu_condition = False
                     addtag(user, pid)
@@ -109,7 +108,6 @@ def search_posts():  # '2. Search for posts'
         else:
             kw_check = False
     keywords = keywords.split(", ")
-
     cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
     posts = cursor.fetchall()
     pids = []
@@ -128,6 +126,7 @@ def search_posts():  # '2. Search for posts'
         results = []
         for pid in pid_count:
             cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid[0],))  # fetches results
+            # results.append(cursor.fetchall())
             results.append(cursor.fetchone())
         print_results(results)  # print results
 
@@ -186,19 +185,13 @@ def add_answer(user, qpost):  # allows user to add answer to qpost
 
 
 def add_vote(user, pid):  # allows user to add vote to pid
-    # check is user already voted
-    cursor.execute('SELECT * FROM votes WHERE pid=? AND uid=?', (pid, user,))
-    if cursor.fetchone():
-        print("You have already voted on this post")
-        return None
-    else:
-        cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
-        votes = cursor.fetchone()
-        vno = votes[0] + 1
-        vote_list = [pid, vno, user]
-        cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
-        conn.commit()
-        print("Vote successfully added")
+    cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
+    votes = cursor.fetchone()
+    vno = votes[0] + 1
+    vote_list = [pid, vno, user]
+    cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
+    conn.commit()
+    print("Vote successfully added")
 
 
 def signin(name, passw): # Handle user signin here
@@ -241,9 +234,6 @@ def checkprivileged(user):  # check if user is a  privileged user
     return privileged_user
 
 
-def givebadge(user, pid):
-    pass
-
 def add_post(user):
     postList = []
     verifyexist = []
@@ -266,6 +256,35 @@ def add_post(user):
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     print("post successfully added")
+
+def check_badge(badgename):
+    badgeList = [badgename]
+    cursor.execute("SELECT bname from badges WHERE bname = ?;", badgeList)
+    if cursor.fetchone():
+        return True
+    else:
+        return False
+    
+    
+def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
+    badge_name = input("please input the badge name you would like to give: ")
+    badge_condition = True
+    while badge_condition:
+        if check_badge(badge_name) == True:
+            badge_condition = False
+        else:
+            badge_name = input("you inputted an incorrect badge name, please try again: ")
+            continue
+    
+    checkList = [pid]
+    cursor.execute(" SELECT poster from posts WHERE pid = ?;", checkList)
+    poster = cursor.fetchone()
+    checkList = [poster, badge_name]
+    cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
+    conn.commit()
+    print("badge succesfully added")
+    
+    
     
 
 def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
@@ -274,17 +293,7 @@ def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
         print("You are not allowed to use this function\n")
         usertasks(user)
     else:  # add their tag to table
-        #check that tag does not already exist
-        tag_duplicate = True;
-        while tag_duplicate:
-            new_tag = input("Type the tag you would like to add:\n")
-            rows = cursor.execute("SELECT tag FROM tags")
-            rows = cursor.fetchall()
-            tag_duplicate = False
-            for elem in rows:
-                if elem[0].upper() == new_tag.upper():
-                    tag_duplicate = True
-
+        tag = input("Type the tag you would like to add:\n")
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
         conn.commit()
         print("Tag added successfully\n")
@@ -387,6 +396,7 @@ def main():
 
     login_menu()
     # usertasks("u069")
+    give_badge("u069","p004")
     # search_posts()  # test remove later
     # add_vote("u069", "p020")  # test remove later
     # add_answer("u069", "p001")  # test remove later
