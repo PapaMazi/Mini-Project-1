@@ -64,12 +64,12 @@ def usertasks(user):
             general_menu_condition = False
             pid = input("Type the post id of the post you want to interact with: \n")
             post_task = input("""Select the post task you would like to perform:\n 
-                                (A): Answer a question\n 
-                                (V): Vote on a post\n 
-                                (M): Mark accepted answer (privileged users only)\n 
-                                (G): Give a badge to a user (privileged users only)\n 
-                                (T): Add a tag to a post (privileged users only)\n 
-                                (E): Edit the title or body of a post (privileged users only)\n""")
+(A): Answer a question\n 
+(V): Vote on a post\n 
+(M): Mark accepted answer (privileged users only)\n 
+(G): Give a badge to a user (privileged users only)\n 
+(T): Add a tag to a post (privileged users only)\n 
+(E): Edit the title or body of a post (privileged users only)\n""")
             while specific_menu_condition:
                 if post_task.upper() == 'A':
                     specific_menu_condition = False
@@ -100,8 +100,16 @@ def search_posts():  # '2. Search for posts'
     # TODO: test if results are ordered based on #of kw
     # TODO: test case insensitivity
     # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
-    keywords = input("Please enter keywords separated by a comma: ")
+    # TODO: need to implement error checking (if pids is empty then make user try again)
+    kw_check = True
+    keywords = ''
+    while kw_check:
+        if not keywords:
+            keywords = input("Please enter keywords separated by a comma: ")
+        else:
+            kw_check = False
     keywords = keywords.split(", ")
+
     cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
     posts = cursor.fetchall()
     pids = []
@@ -126,6 +134,7 @@ def search_posts():  # '2. Search for posts'
 
 def print_results(data):  # handle printing search results here
     # TODO: need to implement listing 5 results at a time
+    # TODO: need to implement selection of posts
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
 
     for i in data:  # prints data in table format (prints all results)
@@ -376,10 +385,10 @@ def main():
             dbname = input()
             continue
 
-    # login_menu()
+    login_menu()
     # usertasks("u069")
     # search_posts()  # test remove later
-    add_vote("u069", "p020")  # test remove later
+    # add_vote("u069", "p020")  # test remove later
     # add_answer("u069", "p001")  # test remove later
 
 
