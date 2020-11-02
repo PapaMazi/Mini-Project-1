@@ -65,23 +65,26 @@ def usertasks(user):
             general_menu_condition = False
             pid = input("Type the post id of the post you want to interact with: \n")
             post_task = input("""Select the post task you would like to perform:\n 
-(A): Answer a question\n 
-(V): Vote on a post\n 
-(M): Mark accepted answer (privileged users only)\n 
-(G): Give a badge to a user (privileged users only)\n 
-(T): Add a tag to a post (privileged users only)\n 
-(E): Edit the title or body of a post (privileged users only)\n""")
+                                (A): Answer a question\n 
+                                (V): Vote on a post\n 
+                                (M): Mark accepted answer (privileged users only)\n 
+                                (G): Give a badge to a user (privileged users only)\n 
+                                (T): Add a tag to a post (privileged users only)\n 
+                                (E): Edit the title or body of a post (privileged users only)\n""")
             while specific_menu_condition:
                 if post_task.upper() == 'A':
                     specific_menu_condition = False
+                    add_answer(user, pid)
                 elif post_task.upper() == 'V':
                     specific_menu_condition = False
+                    add_vote(user, pid)
                 elif post_task.upper() == 'M':
-                    mark_as_accepted(user, pid)
                     specific_menu_condition = False
+                    mark_as_accepted(user, pid)
                 elif post_task.upper() == 'G':
                     give_badge(user, pid)
                     specific_menu_condition = False
+                    givebadge(user, pid)
                 elif post_task.upper() == 'T':
                     specific_menu_condition = False
                     addtag(user, pid)
@@ -101,7 +104,7 @@ def search_posts():  # '2. Search for posts'
     # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
     keywords = input("Please enter keywords separated by a comma: ")
     keywords = keywords.split(", ")
-    posts = cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
+    cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE p.pid = t.pid;")
     posts = cursor.fetchall()
     pids = []
 
@@ -119,7 +122,6 @@ def search_posts():  # '2. Search for posts'
         results = []
         for pid in pid_count:
             cursor.execute('SELECT * FROM posts WHERE pid=?;', (pid[0],))  # fetches results
-            # results.append(cursor.fetchall())
             results.append(cursor.fetchone())
         print_results(results)  # print results
 
@@ -177,13 +179,19 @@ def add_answer(user, qpost):  # allows user to add answer to qpost
 
 
 def add_vote(user, pid):  # allows user to add vote to pid
-    cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
-    votes = cursor.fetchone()
-    vno = votes[0] + 1
-    vote_list = [pid, vno, user]
-    cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
-    conn.commit()
-    print("Vote successfully added")
+    # check is user already voted
+    cursor.execute('SELECT * FROM votes WHERE pid=? AND uid=?', (pid, user,))
+    if cursor.fetchone():
+        print("You have already voted on this post")
+        return None
+    else:
+        cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
+        votes = cursor.fetchone()
+        vno = votes[0] + 1
+        vote_list = [pid, vno, user]
+        cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
+        conn.commit()
+        print("Vote successfully added")
 
 
 def signin(name, passw): # Handle user signin here
@@ -225,6 +233,9 @@ def checkprivileged(user):  # check if user is a  privileged user
             # break
     return privileged_user
 
+
+def givebadge(user, pid):
+    pass
 
 def add_post(user):
     postList = []
@@ -285,7 +296,17 @@ def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
         print("You are not allowed to use this function\n")
         usertasks(user)
     else:  # add their tag to table
-        tag = input("Type the tag you would like to add:\n")
+        #check that tag does not already exist
+        tag_duplicate = True;
+        while tag_duplicate:
+            new_tag = input("Type the tag you would like to add:\n")
+            rows = cursor.execute("SELECT tag FROM tags")
+            rows = cursor.fetchall()
+            tag_duplicate = False
+            for elem in rows:
+                if elem[0].upper() == new_tag.upper():
+                    tag_duplicate = True
+
         cursor.execute("INSERT INTO tags VALUES (:pid , :tag)")
         conn.commit()
         print("Tag added successfully\n")
@@ -390,7 +411,7 @@ def main():
     # usertasks("u069")
     give_badge("u069","p004")
     # search_posts()  # test remove later
-    # add_vote("u069", "p020")  # test remove later
+    add_vote("u069", "p020")  # test remove later
     # add_answer("u069", "p001")  # test remove later
 
 
