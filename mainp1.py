@@ -271,6 +271,7 @@ def add_post(user):
     conn.commit()
     print("post successfully added")
 
+
 def check_badge(badgename):
     badgeList = [badgename]
     cursor.execute("SELECT bname from badges WHERE bname = ?;", badgeList)
@@ -298,8 +299,6 @@ def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
     conn.commit()
     print("badge succesfully added")
     
-    
-    
 
 def addtag(user, pid):  # PU query 3 '3. Post action-Add a tag'
     privileged_user = checkprivileged(user)
@@ -323,8 +322,8 @@ def get_uid_from_name(name):
 def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accepted'
     accepted_condition = True
     acceptedList = []
-    # uid = get_uid_from_name(user)
-    # print(uid)
+    uid = get_uid_from_name(user)
+    print(uid)
     privileged_user = checkprivileged(user)
     print(privileged_user)
     if privileged_user == False:
@@ -408,7 +407,8 @@ def main():
             dbname = input()
             continue
 
-    login_menu()
+    #login_menu()
+    mark_as_accepted("u069","p004")
     # usertasks("u069")
     # give_badge("u069","p004")
     # search_posts()  # test remove later
