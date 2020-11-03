@@ -434,7 +434,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
 
 def main():
     exit_condition = True
-    dbname = input("Enter your squwuite database path to continue: ")  # DELETE BEFORE SUBMISSION
+    dbname = input("Enter your sqlite database path to continue: ")  # DELETE BEFORE SUBMISSION
     # dbname = sys.argv[1]  # Handles command line sys arguments (can pass db in terminal)
     while exit_condition:
         connectCheck = connect_db(dbname)
