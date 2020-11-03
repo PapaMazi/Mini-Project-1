@@ -191,6 +191,7 @@ def add_question(user): # U query 1 '1. Post a question'
     cursor.execute("INSERT INTO questions (pid) VALUES (?)", questionList)
     conn.commit()
     print("post successfully added")
+    main_menu(user)
 
 
 def search_posts(user):  # U query 2 '2. Search for posts'
@@ -300,6 +301,7 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", answerList)
     conn.commit()
     print("Answer successfully added")
+    specific_menu(user, qpost)
 
 
 def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
@@ -312,6 +314,7 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
     print("Vote successfully added")
+    specific_menu(user, pid)
 
 
 def check_badge(badgename): # checks if badge name is valid
