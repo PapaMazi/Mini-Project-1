@@ -250,7 +250,7 @@ def print_results(data, user):  # handle printing search results here
             if re.match('[a-zA-Z]{1}\d{3}', user_input):  # if user enters a pid, call specific_menu(user, pid)
                 valid_input = False
                 specific_menu(user, user_input)
-                break
+                main_menu(user)
             elif user_input == '':  # if users presses enter, show next page of results
                 if len(data[i:i + 5]) != 5:
                     user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
@@ -294,7 +294,9 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     postList = [new_id.upper(), post_title.upper(), post_body.upper(),user]
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
-    answerList = [new_id, qpost]
+    cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (qpost.lower(),))
+    qpost = cursor.fetchone()
+    answerList = [new_id, qpost[0]]
     cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", answerList)
     conn.commit()
     print("Answer successfully added")
