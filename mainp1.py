@@ -202,16 +202,20 @@ def search_posts(user):  # U query 2 '2. Search for posts'
             kw_check = False
     if keywords.lower() == '0':
         main_menu(user)
-    keywords = keywords.split(", ")
-    cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE upper(p.pid) = upper(t.pid);")
+    keywords = "".join(keywords.split())
+    keywords = keywords.split(",")
+    cursor.execute("SELECT pid, title, body, tag FROM posts LEFT OUTER JOIN tags USING (pid);")
     posts = cursor.fetchall()
+    print("posts: ", posts)
     pids = []
 
+    print("keywords: ", keywords)
     for item in keywords:  # for each keyword the user entered
         for row in posts:  # for each row from posts
             for field in row:  # for each field in row
-                if item.upper() in field.upper():  # check if keyword is in the field
-                    pids.append(row[0])  # if kw is in row then add pid to pid[]
+                if field is not None:
+                    if item.upper() in field.upper():  # check if keyword is in the field
+                        pids.append(row[0])  # if kw is in row then add pid to pid[]
 
     if not pids:  # if pids[] is empty
         print("Couldn't find any matches")
@@ -221,8 +225,9 @@ def search_posts(user):  # U query 2 '2. Search for posts'
         pid_count = sorted(pid_count.items(), key=lambda v: v[1], reverse=True)  #orders based on # of kw  # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
         results = []
         for pid in pid_count:
-            cursor.execute('SELECT * FROM posts WHERE upper(pid)=?;', (pid[0].upper(),))  # fetches results
-            results.append(cursor.fetchone())
+            if pid[0] is not None:
+                cursor.execute('SELECT * FROM posts WHERE upper(pid)=?;', (pid[0].upper(),))  # fetches results
+                results.append(cursor.fetchone())
         print_results(results, user)  # print results
 
 
@@ -241,6 +246,7 @@ def print_results(data, user):  # handle printing search results here
             if re.match('[a-zA-Z]{1}\d{3}', user_input):  # if user enters a pid, call specific_menu(user, pid)
                 valid_input = False
                 specific_menu(user, user_input)
+                break
             elif user_input == '':  # if users presses enter, show next page of results
                 if len(data[i:i + 5]) != 5:
                     user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
@@ -291,10 +297,12 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
 
 
 def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
-    cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (pid,))  # gets number of votes
+    cursor.execute('SELECT count(pid) FROM votes WHERE lower(pid) = ?', (pid.lower(),))  # gets number of votes
     votes = cursor.fetchone()
+    cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (pid.lower(),))
+    match_pid = cursor.fetchone()
     vno = votes[0] + 1
-    vote_list = [pid, vno, user]
+    vote_list = [match_pid[0], vno, user]
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
     print("Vote successfully added")
@@ -353,8 +361,8 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
                 print("the ID you provided does not correspond to an answer, try again!")
                 continue
     specific_menu(user, pid)
-    
-    
+
+
 def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
     privileged_user = check_privileged(user)
     if privileged_user == False:
@@ -368,7 +376,7 @@ def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
         else:
             badge_name = input("you inputted an incorrect badge name, please try again: ")
             continue
-    
+
     checkList = [pid.upper()]
     cursor.execute(" SELECT poster from posts WHERE upper(pid) = ?;", checkList)
     poster = cursor.fetchone()
@@ -378,7 +386,7 @@ def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
     conn.commit()
     print("badge succesfully added")
     specific_menu(user, pid)
-    
+
 
 def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
     privileged_user = check_privileged(user)
