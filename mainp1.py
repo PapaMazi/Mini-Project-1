@@ -23,13 +23,14 @@ def connect_db(dbname):  # init db cursor
 
 
 def convertTuple(tup):
-    str =  ''.join(tup)
+    str = ''.join(tup)
     return str
 
 
 def main_menu(user):
+    # TODO: need to implement logout functionality
     general_menu_condition = True
-    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n or enter 0 to exit: ")
+    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (0) Exit program: ")
     while general_menu_condition:
         if task.upper() == 'P':
             add_question(user)
@@ -41,7 +42,8 @@ def main_menu(user):
         elif task.upper() == '0':
             quit()
         else:
-            task = input("you inputted an incorrect choice, please try again: ")
+            print("Invalid Input. Please try again.")
+            task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (0) Exit program: ")
             continue
 
 
@@ -56,7 +58,7 @@ def login_menu(): # user can log in or register for program
             user = input("Enter Username: ")
             passw = getpass.getpass(prompt="Enter Password: ")
             condition = sign_in(user, passw)
-            if condition == True:
+            if condition:
                 user = get_uid_from_name(user)
                 user = convertTuple(user)
                 main_menu(user)
@@ -65,7 +67,7 @@ def login_menu(): # user can log in or register for program
                 continue
         elif oper == "2":
             user = register()
-            print("user succesfully registered.")
+            print("User successfully registered.")
             login_condition = False
             main_menu(user)
         elif oper == "0":
@@ -76,7 +78,7 @@ def login_menu(): # user can log in or register for program
 
 def sign_in(name, passw): # user signs into program
     sign_in_condition = True
-    verifyList = []
+    # verifyList = []
     uid = get_uid_from_name(name)
     uid = convertTuple(uid)
     verifyList = [uid.upper(),passw]
@@ -131,7 +133,7 @@ def specific_menu(user, pid):
 
 
 def register():  # user registers for program
-    usersList = []
+    # usersList = []
     user_id = input("Enter your user id in this format (ex: u001): ")
     user_name = input("Enter your name: ")
     user_city = input("Enter your city of residence: ")
@@ -185,19 +187,21 @@ def add_question(user): # U query 1 '1. Post a question'
     print("post successfully added")
 
 
-def search_posts(user): # U query 2 '2. Search for posts'
-    user = user.upper()
+def search_posts(user):  # U query 2 '2. Search for posts'
     # TODO: test if results are ordered based on #of kw
     # TODO: test case insensitivity
     # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
-    # TODO: need to implement error checking (if pids is empty then make user try again)
+    user = user.upper()
+
     kw_check = True
     keywords = ''
     while kw_check:
         if not keywords:
-            keywords = input("Please enter keywords separated by a comma: ")
+            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
         else:
             kw_check = False
+    if keywords.lower() == '0':
+        main_menu(user)
     keywords = keywords.split(", ")
     cursor.execute("SELECT p.pid, p.title, p.body, t.tag FROM posts p, tags t WHERE upper(p.pid) = upper(t.pid);")
     posts = cursor.fetchall()
@@ -223,32 +227,35 @@ def search_posts(user): # U query 2 '2. Search for posts'
 
 
 def print_results(data, user):  # handle printing search results here
-    # TODO: test listing 5 results at a time
-    # TODO: need to implement selection of posts
-    table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
+    # TODO: actually data independent? what if pid is not pXXX?
 
-    check = True
-    while check:
-        for i in range(0, len(data), 5):
-            print_table(data[i:i+5])
-            ind = input("Would you like to see next page? (Y/N) or enter pid for post actions: ")
-            if ind.lower() == "y":
-                continue
-            elif ind.lower() == 'n':
-                break
-                # check = False
-            elif re.match('[a-zA-Z]{1}\d{3}', ind):
-                specific_menu(user, ind)
-                continue
+    print(len(data), "results found.")
+    for i in range(0, len(data), 5):
+        print_table(data[i:i + 5])
+        valid_input = True
+        if len(data[i:i + 5]) == 5:
+            user_input = input("Press enter to see next page or enter pid for post actions (press 0 to return to main menu): ")
+        else:
+            user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
+        while valid_input:  # while loop checks if user enters valid inputs
+            if re.match('[a-zA-Z]{1}\d{3}', user_input):  # if user enters a pid, call specific_menu(user, pid)
+                valid_input = False
+                specific_menu(user, user_input)
+            elif user_input == '':  # if users presses enter, show next page of results
+                if len(data[i:i + 5]) != 5:
+                    user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
+                else:
+                    valid_input = False
+                    continue
+            elif user_input.lower() == '0':  # pressing 0 takes user back to main menu
+                valid_input = False
+                main_menu(user)
             else:
-                ind = input("Invalid Input. Please try again: ")
-                check = True
-            if i >= (len(data) - 5):
-                break
-        check = False
+                print("Invalid Input. Please try again.")
+                user_input = input("Press enter to see next page or enter pid for post actions (press 0 to return to main menu): ")
 
 
-def print_table(data): #handle printing the table here
+def print_table(data): # handle printing the table here
     table = PrettyTable(['PID', 'Post Date', 'Title', 'Body', 'Poster', 'Votes', 'Answers'])
     for i in data:  # prints data in table format (prints all results)
         cursor.execute('SELECT count(pid) FROM votes WHERE pid=?', (i[0],))  # gets number of votes
@@ -260,7 +267,7 @@ def print_table(data): #handle printing the table here
 
 
 def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
-    postList = []
+    # postList = []
     verifyexist = []
     p_string = 'p'
     post_title = input("Enter your post title: ")
@@ -332,7 +339,7 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
                     elif double_check.upper() == "N":
                         break
                     else:
-                        print("invalid input, please try again!")
+                        print("Invalid Input. Please try again.")
                         continue
                 else:
                     acceptedList = [answerID.upper(), pid.upper()]
@@ -427,12 +434,11 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
 
 def main():
     exit_condition = True
-    dbname = input(
-        "Welcome to this interface, here you can interact with our database system,\nplease enter your sqlite database path to continue: ")
+    dbname = input("Enter your squwuite database path to continue: ")  # DELETE BEFORE SUBMISSION
     # dbname = sys.argv[1]  # Handles command line sys arguments (can pass db in terminal)
     while exit_condition:
         connectCheck = connect_db(dbname)
-        if connectCheck == True:
+        if connectCheck:
             print("Database connected succesfully!")
             exit_condition = False
         else:
@@ -440,8 +446,7 @@ def main():
             dbname = input()
             continue
     login_menu()
-    main_menu()
-
+    # main_menu()
 
 
 if __name__ == "__main__":
