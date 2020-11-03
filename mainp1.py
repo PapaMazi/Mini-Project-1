@@ -212,10 +212,8 @@ def search_posts(user):  # U query 2 '2. Search for posts'
     keywords = keywords.split(",")
     cursor.execute("SELECT pid, title, body, tag FROM posts LEFT OUTER JOIN tags USING (pid);")
     posts = cursor.fetchall()
-    print("posts: ", posts)
     pids = []
 
-    print("keywords: ", keywords)
     for item in keywords:  # for each keyword the user entered
         for row in posts:  # for each row from posts
             for field in row:  # for each field in row
@@ -240,8 +238,8 @@ def search_posts(user):  # U query 2 '2. Search for posts'
 def print_results(data, user):  # handle printing search results here
     # TODO: actually data independent? what if pid is not pXXX?
 
-    print(len(data), "results found.")
-    for i in range(0, len(data), 5):
+    print(len(data), "results found.")  # prints # of results found
+    for i in range(0, len(data), 5):  # iterates 5 at a time, printing results
         print_table(data[i:i + 5])
         valid_input = True
         if len(data[i:i + 5]) == 5:
@@ -306,7 +304,7 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
     cursor.execute('SELECT count(pid) FROM votes WHERE lower(pid) = ?', (pid.lower(),))  # gets number of votes
     votes = cursor.fetchone()
     cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (pid.lower(),))
-    match_pid = cursor.fetchone()
+    match_pid = cursor.fetchone()  # actual pid to enforce foreign key constraints
     vno = votes[0] + 1
     vote_list = [match_pid[0], vno, user]
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
