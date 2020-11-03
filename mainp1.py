@@ -133,8 +133,14 @@ def specific_menu(user, pid):
 
 
 def register():  # user registers for program
-    # usersList = []
-    user_id = input("Enter your user id in this format (ex: u001): ")
+    register_condition= True
+    while register_condition:
+        user_id = input("Enter your user id in this format (ex: u001): ")
+        cursor.execute(" SELECT uid from users WHERE uid = ?;", (user_id,))
+        if cursor.fetchone():
+            print("the user_id you entered already exists, please try another one")
+        else:
+            register_condition = False
     user_name = input("Enter your name: ")
     user_city = input("Enter your city of residence: ")
     user_password = getpass.getpass(prompt="Enter Password (case-sensitive) : ")
