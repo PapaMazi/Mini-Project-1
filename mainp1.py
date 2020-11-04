@@ -29,7 +29,7 @@ def convertTuple(tup):
 
 def main_menu(user):
     general_menu_condition = True
-    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (L) Log out\n")
+    task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (L) Log out\n (0) Exit program\n")
     while general_menu_condition:
         if task.upper() == 'P':  # select post a question
             add_question(user)
@@ -40,6 +40,8 @@ def main_menu(user):
             general_menu_condition = False
         elif task.upper() == 'L':  # user selects logout
             login_menu()
+        elif task == '0':
+            quit()
         else:
             print("Invalid Input. Please try again.")
             task = input("Select the task you would like to perform:\n (P) Post a question\n (S) Search for posts\n (0) Exit program: ")
@@ -333,13 +335,14 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
         return
     else:
         while accepted_condition:
-            answerid = aid.upper()
+            answerid = aid.lower()
             answerList = [answerid]
             #find pid of question that answer is associated with
-            cursor.execute("SELECT qid FROM answers WHERE upper(pid) = ?", answerList)
+            cursor.execute("SELECT qid FROM answers WHERE lower(pid) = ?", answerList)
             postid = cursor.fetchone()
-            pidList = [postid[0].upper()]
-            cursor.execute("SELECT pid FROM answers WHERE upper(pid) = ?; ", answerList)
+            postid = convertTuple(postid)
+            pidList = [postid.upper()]
+            cursor.execute("SELECT pid FROM answers WHERE lower(pid) = ?; ", answerList)
             if cursor.fetchone():
                 #check if the question associate with answer already has accepted answer
                 cursor.execute("""SELECT theaid FROM questions q
