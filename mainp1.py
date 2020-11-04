@@ -359,7 +359,7 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
                         continue
                 else:
                     acceptedList = [answerid, postid[0].lower()]
-                    cursor.execute("UPDATE questions SET theaid = ? WHERE lowe(pid) = ?;", acceptedList)
+                    cursor.execute("UPDATE questions SET theaid = ? WHERE lower(pid) = ?;", acceptedList)
                     conn.commit()
                     print("This post has been marked as the accepted answer.\n")
                     accepted_condition = False
