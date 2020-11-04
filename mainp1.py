@@ -147,6 +147,7 @@ def register():  # user registers for program
     conn.commit()
     return user_id
 
+
 def check_privileged(user):  # check if user is a privileged user
     user = user.upper()
     privileged_user = False
@@ -231,11 +232,11 @@ def search_posts(user):  # U query 2 '2. Search for posts'
 def print_results(data, user):  # handle printing search results here
     # TODO: actually data independent? what if pid is not pXXX?
 
-    print(len(data), "results found.")  # prints # of results found
+    print(len(data), "result(s) found.")  # prints # of results found
     for i in range(0, len(data), 5):  # iterates 5 at a time, printing results
         print_table(data[i:i + 5])
         valid_input = True
-        if len(data[i:i + 5]) == 5:
+        if len(data[i:i + 5]) == 5 and (i != len(data) - 5):
             user_input = input("Press enter to see next page or enter pid for post actions (press 0 to return to main menu): ")
         else:
             user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
@@ -245,7 +246,7 @@ def print_results(data, user):  # handle printing search results here
                 specific_menu(user, user_input)
                 main_menu(user)
             elif user_input == '':  # if users presses enter, show next page of results
-                if len(data[i:i + 5]) != 5:
+                if len(data[i:i + 5]) != 5 or (i == len(data) - 5):
                     user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
                 else:
                     valid_input = False
