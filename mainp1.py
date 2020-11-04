@@ -174,7 +174,9 @@ def add_question(user): # U query 1 '1. Post a question'
         new_id = p_string + str(new_id)
     else:
         pass
-    postList = [new_id.upper(), post_title.upper(), post_body.upper(), user]
+    cursor.execute('SELECT uid FROM users WHERE lower(uid) = ?', (user.lower(),))
+    proper_uid = cursor.fetchone()  # actual uid to enforce foreign key constraints
+    postList = [new_id.upper(), post_title.upper(), post_body.upper(), proper_uid[0]]
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     questionList = [new_id]
