@@ -242,9 +242,14 @@ def print_results(data, user):  # handle printing search results here
             user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
         while valid_input:  # while loop checks if user enters valid inputs
             if re.match('[a-zA-Z]{1}\d{3}', user_input):  # if user enters a pid, call specific_menu(user, pid)
-                valid_input = False
-                specific_menu(user, user_input)
-                main_menu(user)
+                if check_pid(user_input):
+                    valid_input = False
+                    specific_menu(user, user_input)
+                    main_menu(user)
+                else:
+                    print("Invalid Input. Please try again.")
+                    user_input = input(
+                        "Press enter to see next page or enter pid for post actions (press 0 to return to main menu): ")
             elif user_input == '':  # if users presses enter, show next page of results
                 if len(data[i:i + 5]) != 5 or (i == len(data) - 5):
                     user_input = input("Enter pid for post actions (press 0 to return to main menu): ")
@@ -257,6 +262,15 @@ def print_results(data, user):  # handle printing search results here
             else:
                 print("Invalid Input. Please try again.")
                 user_input = input("Press enter to see next page or enter pid for post actions (press 0 to return to main menu): ")
+
+
+def check_pid(pid):  # checks if pid exists in database
+    cursor.execute("SELECT pid from posts WHERE lower(pid) = ?;", (pid.lower(),))
+    pid = cursor.fetchone()
+    if pid is None:
+        return False
+    else:
+        return True
 
 
 def print_table(data): # handle printing the table here
@@ -285,7 +299,9 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
         new_id = p_string + str(new_id)
     else:
         pass
-    postList = [new_id.upper(), post_title.upper(), post_body.upper(),user]
+    cursor.execute('SELECT uid FROM users WHERE lower(uid) = ?', (user.lower(),))
+    proper_uid = cursor.fetchone()  # actual uid to enforce foreign key constraints
+    postList = [new_id.upper(), post_title.upper(), post_body.upper(), proper_uid[0]]
     cursor.execute(" INSERT INTO posts (pid, pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (qpost.lower(),))
@@ -301,8 +317,10 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
     votes = cursor.fetchone()
     cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (pid.lower(),))
     match_pid = cursor.fetchone()  # actual pid to enforce foreign key constraints
+    cursor.execute('SELECT uid FROM users WHERE lower(uid) = ?', (user.lower(),))
+    proper_uid = cursor.fetchone()  # actual uid to enforce foreign key constraints
     vno = votes[0] + 1
-    vote_list = [match_pid[0], vno, user]
+    vote_list = [match_pid[0], vno, proper_uid[0]]
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
     print("Vote successfully added")
