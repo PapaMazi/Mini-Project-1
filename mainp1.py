@@ -429,7 +429,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             user_choice = input("Would you like to edit the title of this post? (Y) or (N) ")
             if user_choice.upper() == 'Y':
                 new_title = input("What would you like the new title to be? ")
-                titleList = [new_title, pid]
+                titleList = [new_title, pid.lower()]
                 cursor.execute(""" UPDATE posts 
                         SET title = ?
                         WHERE pid = ? ;""", titleList)
@@ -446,7 +446,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             user_choice = input("Would you like to edit the body of this post? (Y) or (N) ")
             if user_choice.upper() == 'Y':
                 new_body = input("What would you like the new body to be? ")
-                bodyList = [new_body.lower(), pid.lower()]
+                bodyList = [new_body, pid.lower()]
                 cursor.execute(""" UPDATE posts 
                         SET body = ?
                         WHERE pid = ? ;""", bodyList)
