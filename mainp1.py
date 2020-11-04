@@ -223,51 +223,7 @@ def search_posts(user):  # U query 2 '2. Search for posts'
         print_results(results, user)  # print results
 
 
-def search_posts(user):  # U query 2 '2. Search for posts'
-    # TODO: test if results are ordered based on #of kw
-    # TODO: test case insensitivity
-    # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
-    user = user.upper()
-
-    kw_check = True
-    keywords = ''
-    while kw_check:
-        if not keywords:
-            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
-        else:
-            kw_check = False
-    if keywords.lower() == '0':
-        main_menu(user)
-    keywords = "".join(keywords.split())
-    keywords = keywords.split(",")
-    cursor.execute("SELECT pid, title, body, tag FROM posts LEFT OUTER JOIN tags USING (pid);")
-    posts = cursor.fetchall()
-    pids = []
-
-    for item in keywords:  # for each keyword the user entered
-        for row in posts:  # for each row from posts
-            for field in row:  # for each field in row
-                if field is not None:
-                    if item.upper() in field.upper():  # check if keyword is in the field
-                        pids.append(row[0])  # if kw is in row then add pid to pid[]
-
-    if not pids:  # if pids[] is empty
-        print("Couldn't find any matches")
-        search_posts(user)
-    else:  # if pids[] not empty then:
-        pid_count = {i:pids.count(i) for i in pids}  #counts # https://stackoverflow.com/questions/23240969/python-count-repeated-elements-in-the-list/23240989
-        pid_count = sorted(pid_count.items(), key=lambda v: v[1], reverse=True)  #orders based on # of kw  # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
-        results = []
-        for pid in pid_count:
-            if pid[0] is not None:
-                cursor.execute('SELECT * FROM posts WHERE upper(pid)=?;', (pid[0].upper(),))  # fetches results
-                results.append(cursor.fetchone())
-        print_results(results, user)  # print results
-
-
 def print_results(data, user):  # handle printing search results here
-    # TODO: actually data independent? what if pid is not pXXX?
-
     print(len(data), "result(s) found.")  # prints # of results found
     for i in range(0, len(data), 5):  # iterates 5 at a time, printing results
         print_table(data[i:i + 5])
