@@ -7,7 +7,6 @@ import re
 import sys
 from os.path import isfile, getsize
 
-# db_name = sys.argv[1]
 conn = None
 cursor = None
 
@@ -133,7 +132,7 @@ def register():  # user registers for program
         user_id = input("Enter your user id: ")
         cursor.execute(" SELECT uid FROM users WHERE uid = ?;", (user_id,))
         if cursor.fetchone():
-            print("The user id you entered already exists, please try another one.\n") 
+            print("The user id you entered already exists, please try another one.\n")
         else:
             register_condition = False
     # add user's information to database
@@ -447,17 +446,23 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
 
 def main():
     exit_condition = True
-    dbname = input("Enter your sqlite database path to continue: ")  # DELETE BEFORE SUBMISSION
-    # dbname = sys.argv[1]  # Handles command line sys arguments (can pass db in terminal)
+    # dbname = input("Enter your sqlite database path to continue: ")  # DELETE BEFORE SUBMISSION
+
+    try:
+        dbname = sys.argv[1]  # Handles command line sys arguments (can pass db in terminal)
+    except:
+        print("Missing database file")
+        quit()
+
     while exit_condition:
         connectCheck = connect_db(dbname)
         if connectCheck:
             print("Database connected succesfully!")
             exit_condition = False
         else:
-            print("an error occured! please try again:")
-            dbname = input()
-            continue
+            print("Database could not be opened.")
+            quit()
+
     login_menu()
 
 
