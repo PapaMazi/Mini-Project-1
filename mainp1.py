@@ -301,7 +301,6 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", answerList)
     conn.commit()
     print("Answer successfully added")
-    specific_menu(user, qpost)
 
 
 def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
@@ -314,7 +313,6 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
     cursor.execute(" INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?); ", vote_list)
     conn.commit()
     print("Vote successfully added")
-    specific_menu(user, pid)
 
 
 def check_badge(badgename): # checks if badge name is valid
@@ -369,7 +367,7 @@ def mark_as_accepted(user, pid):  # PU query 1 '1. Post action-Mark as the accep
             else:
                 print("the ID you provided does not correspond to an answer, try again!")
                 continue
-    specific_menu(user, pid)
+    # specific_menu(user, pid)
 
 
 def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
@@ -394,7 +392,7 @@ def give_badge(user, pid): # PU query 2 '2. Post action-Give a badge'
     cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
     conn.commit()
     print("badge succesfully added")
-    specific_menu(user, pid)
+    # specific_menu(user, pid)
 
 
 def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
@@ -417,7 +415,7 @@ def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
         cursor.execute("INSERT INTO tags VALUES (?, ?);", tagList)
         conn.commit()
         print("Tag added successfully\n")
-    specific_menu(user, pid)
+    # specific_menu(user, pid)
 
 
 def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
@@ -446,7 +444,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             conn.commit()
             print("Body changed successfully\n")
 
-    specific_menu(user, pid)
+    # specific_menu(user, pid)
 
 
 def main():
