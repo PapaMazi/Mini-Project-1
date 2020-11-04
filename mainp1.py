@@ -21,6 +21,7 @@ def connect_db(dbname):  # init db cursor
     return True
 
 
+
 def convertTuple(tup):
     str = ''.join(tup)
     return str
