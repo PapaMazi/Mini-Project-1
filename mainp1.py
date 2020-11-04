@@ -73,7 +73,6 @@ def login_menu(): # user can log in or register for program
         else:
             continue
 
-
 def sign_in(userid, passw): # user signs into program
     sign_in_condition = True
     
@@ -142,7 +141,7 @@ def register():  # user registers for program
     user_name = input("Enter your name: ")
     user_city = input("Enter your city of residence: ")
     user_password = getpass.getpass(prompt="Enter Password (case-sensitive): ")
-    usersList = [user_id.upper(), user_name.upper(), user_password, user_city.upper()]
+    usersList = [user_id, user_name, user_password, user_city]
     cursor.execute(""" INSERT INTO users VALUES (?,?, ?, ?, date('now')); """, usersList);
     conn.commit()
     return user_id
@@ -177,7 +176,7 @@ def add_question(user): # U query 1 '1. Post a question'
         pass
     cursor.execute('SELECT uid FROM users WHERE lower(uid) = ?', (user.lower(),))
     proper_uid = cursor.fetchone()  # actual uid to enforce foreign key constraints
-    postList = [new_id.upper(), post_title.upper(), post_body.upper(), proper_uid[0]]
+    postList = [new_id, post_title, post_body, proper_uid[0]]
     cursor.execute(" INSERT INTO posts (pid,pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     questionList = [new_id]
@@ -185,6 +184,48 @@ def add_question(user): # U query 1 '1. Post a question'
     conn.commit()
     print("post successfully added")
     main_menu(user)
+
+
+def search_posts(user):  # U query 2 '2. Search for posts'
+    # TODO: test if results are ordered based on #of kw
+    # TODO: test case insensitivity
+    # TODO: test partial matching (see: https://eclass.srv.ualberta.ca/mod/forum/discuss.php?d=1537384)
+    user = user.upper()
+
+    kw_check = True
+    keywords = ''
+    while kw_check:
+        if not keywords:
+            keywords = input("Please enter keywords separated by a comma (press 0 to return to main menu): ")
+        else:
+            kw_check = False
+    if keywords.lower() == '0':
+        main_menu(user)
+    keywords = "".join(keywords.split())
+    keywords = keywords.split(",")
+    cursor.execute("SELECT pid, title, body, tag FROM posts LEFT OUTER JOIN tags USING (pid);")
+    posts = cursor.fetchall()
+    pids = []
+
+    for item in keywords:  # for each keyword the user entered
+        for row in posts:  # for each row from posts
+            for field in row:  # for each field in row
+                if field is not None:
+                    if item.upper() in field.upper():  # check if keyword is in the field
+                        pids.append(row[0])  # if kw is in row then add pid to pid[]
+
+    if not pids:  # if pids[] is empty
+        print("Couldn't find any matches")
+        search_posts(user)
+    else:  # if pids[] not empty then:
+        pid_count = {i:pids.count(i) for i in pids}  #counts # https://stackoverflow.com/questions/23240969/python-count-repeated-elements-in-the-list/23240989
+        pid_count = sorted(pid_count.items(), key=lambda v: v[1], reverse=True)  #orders based on # of kw  # https://stackoverflow.com/questions/613183/how-do-i-sort-a-dictionary-by-value
+        results = []
+        for pid in pid_count:
+            if pid[0] is not None:
+                cursor.execute('SELECT * FROM posts WHERE upper(pid)=?;', (pid[0].upper(),))  # fetches results
+                results.append(cursor.fetchone())
+        print_results(results, user)  # print results
 
 
 def search_posts(user):  # U query 2 '2. Search for posts'
@@ -301,7 +342,7 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
         pass
     cursor.execute('SELECT uid FROM users WHERE lower(uid) = ?', (user.lower(),))
     proper_uid = cursor.fetchone()  # actual uid to enforce foreign key constraints
-    postList = [new_id.upper(), post_title.upper(), post_body.upper(), proper_uid[0]]
+    postList = [new_id, post_title, post_body,user]
     cursor.execute(" INSERT INTO posts (pid, pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ",postList)
     conn.commit()
     cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (qpost.lower(),))
@@ -347,17 +388,19 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
         while accepted_condition:
             answerid = aid.upper()
             answerList = [answerid]
-            pid = cursor.execute("SELECT pid FROM answers WHERE upper(pid) = ?; ", answerList)
-            pid = cursor.fetchone()
-            if pid:
-                postid = pid[0].upper()
-                pidList = [postid]
-                has_answer = cursor.execute(" SELECT theaid FROM questions WHERE upper(pid) = ?; ", pidList)
-                has_answer = cursor.fetchone()
-                if has_answer:
+            #find pid of question that answer is associated with
+            cursor.execute("SELECT qid FROM answers WHERE upper(pid) = ?", answerList)
+            postid = cursor.fetchone()
+            pidList = [postid[0].upper()]
+            cursor.execute("SELECT pid FROM answers WHERE upper(pid) = ?; ", answerList)
+            if cursor.fetchone():
+                #check if the question associate with answer already has accepted answer
+                cursor.execute("""SELECT theaid FROM questions q
+                            WHERE upper(pid) = ? AND upper(theaid) != NULL""", pidList)
+                acceptedList = [answerid, postid[0]]
+                if cursor.fetchone():
                     double_check = input("This question already has an accepted answer, would you like to overwrite it? (y/n): ")
                     if double_check.upper() == "Y":
-                        acceptedList = [answerid, postid]
                         cursor.execute("UPDATE questions SET theaid = ? WHERE pid = ?;", acceptedList)
                         conn.commit()
                         print("This post has been marked as the accepted answer.\n")
@@ -369,7 +412,7 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
                         print("Invalid Input. Please try again.\n")
                         continue
                 else:
-                    acceptedList = [answerid, postid]
+                    acceptedList = [answerid, postid[0]]
                     cursor.execute("UPDATE questions SET theaid = ? WHERE pid = ?;", acceptedList)
                     conn.commit()
                     print("This post has been marked as the accepted answer.\n")
