@@ -21,6 +21,7 @@ def connect_db(dbname):  # init db cursor
     return True
 
 
+
 def convertTuple(tup):
     str = ''.join(tup)
     return str
@@ -361,7 +362,7 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
                         print("Invalid Input. Please try again.\n")
                         continue
                 else:
-                    acceptedList = [answerid, postid[0].lower()]
+                    acceptedList = [answerid.lower(), postid[0].lower()]
                     cursor.execute("UPDATE questions SET theaid = ? WHERE lower(pid) = ?;", acceptedList)
                     conn.commit()
                     print("This post has been marked as the accepted answer.\n")
@@ -431,7 +432,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             user_choice = input("Would you like to edit the title of this post? (Y) or (N) ")
             if user_choice.upper() == 'Y':
                 new_title = input("What would you like the new title to be? ")
-                titleList = [new_title, pid]
+                titleList = [new_title, pid.lower()]
                 cursor.execute(""" UPDATE posts 
                         SET title = ?
                         WHERE pid = ? ;""", titleList)
@@ -448,7 +449,7 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
             user_choice = input("Would you like to edit the body of this post? (Y) or (N) ")
             if user_choice.upper() == 'Y':
                 new_body = input("What would you like the new body to be? ")
-                bodyList = [new_body.lower(), pid.lower()]
+                bodyList = [new_body, pid.lower()]
                 cursor.execute(""" UPDATE posts 
                         SET body = ?
                         WHERE pid = ? ;""", bodyList)
