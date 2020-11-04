@@ -275,11 +275,16 @@ def print_table(data):  # handle printing the table here
 
 
 def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
+    cursor.execute('SELECT pid FROM questions WHERE lower(pid) = ?', (qpost.lower(),))
+    qpost = cursor.fetchone()
+    if qpost is None:
+        print("You must select a question")
+        return
     post_title = input("Enter your post title: ")
     post_body = input("Enter your post body: ")
     new_id = randint(200,999)
     new_id = 'p' + str(new_id)
-    verifyexist = [new_id]
+    verifyexist = [new_id.lower()]
     cursor.execute(" SELECT pid from posts WHERE lower(pid) = ?; ", verifyexist)
     if cursor.fetchone():
         new_id = randint(200,999)
@@ -291,9 +296,7 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     postList = [new_id, post_title, post_body, proper_uid[0]]
     cursor.execute(" INSERT INTO posts (pid, pdate, title, body, poster) VALUES (?,date('now'), ?,?,?); ", postList)
     conn.commit()
-    cursor.execute('SELECT pid FROM posts WHERE lower(pid) = ?', (qpost.lower(),))
-    qpost = cursor.fetchone()
-    answerList = [new_id, qpost[0]]
+    answerList = [new_id.lower(), qpost[0]]
     cursor.execute("INSERT INTO answers (pid, qid) VALUES (?,?)", answerList)
     conn.commit()
     print("Answer successfully added")
