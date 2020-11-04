@@ -80,7 +80,12 @@ def sign_in(name, passw): # user signs into program
     sign_in_condition = True
     # verifyList = []
     uid = get_uid_from_name(name)
-    uid = convertTuple(uid)
+    if uid == False:
+        print("user login unsuccessful, try again.")
+        sign_in_condition = False
+        return sign_in_condition
+    else:
+        uid = convertTuple(uid)
     verifyList = [uid.upper(),passw]
     cursor.execute(" select name from users WHERE upper(uid) = ? AND pwd = ?;", verifyList)
     if cursor.fetchone():
@@ -154,7 +159,10 @@ def get_uid_from_name(name): # get the uid for a given username
     name = name.upper()
     cursor.execute("SELECT uid from users WHERE upper(name) = ?;", (name,))
     uid = cursor.fetchone()
-    return uid
+    if uid is None:
+        return False
+    else:
+        return uid
 
 
 def check_privileged(user):  # check if user is a privileged user
