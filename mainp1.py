@@ -76,8 +76,8 @@ def login_menu(): # user can log in or register for program
 
 def sign_in(userid, passw): # user signs into program
     sign_in_condition = True
-    verifyList = [userid.upper(),passw]
-    cursor.execute("SELECT uid FROM users WHERE upper(uid) = ? AND pwd = ?;", verifyList)
+    verifyList = [userid.lower(),passw]
+    cursor.execute("SELECT uid FROM users WHERE lower(uid) = ? AND pwd = ?;", verifyList)
 
     if cursor.fetchone():
         print("User login successful.\n")
@@ -119,9 +119,6 @@ def specific_menu(user, pid):
         elif post_task.upper() == 'R':  # return to main menu
             specific_menu_condition = False
             main_menu(user)
-        elif post_task.upper() == 'L':  # logout user
-            specific_menu_condition = False
-            login_menu()
         else:
             post_task = input("you inputted an incorrect choice, please try again: ")
             continue
@@ -141,19 +138,19 @@ def register():  # user registers for program
     user_name = input("Enter your name: ")
     user_city = input("Enter your city of residence: ")
     user_password = getpass.getpass(prompt="Enter Password (case-sensitive): ")
-    usersList = [user_id, user_name, user_password, user_city]
+    usersList = [user_id.lower(), user_name.lower(), user_password, user_city.lower()]
     cursor.execute(""" INSERT INTO users VALUES (?,?, ?, ?, date('now')); """, usersList);
     conn.commit()
     return user_id
 
 
 def check_privileged(user):  # check if user is a privileged user
-    user = user.upper()
+    user = user.lower()
     privileged_user = False
     rows = cursor.execute("SELECT uid FROM privileged")
     rows = cursor.fetchall()
     for elem in rows:
-        if elem[0].upper() == user:
+        if elem[0].lower() == user:
             priveleged_user = True
             return priveleged_user
     return privileged_user
@@ -165,9 +162,9 @@ def add_question(user):  # U query 1 '1. Post a question'
     post_body = input("Enter your post body: ")
     new_id = randint(200,999)
     new_id = p_string + str(new_id)
-    new_id = new_id.upper()
+    new_id = new_id.lower()
     verifyexist = [new_id]
-    cursor.execute(" SELECT pid from posts WHERE upper(pid) = ?; ", verifyexist)
+    cursor.execute(" SELECT pid from posts WHERE lower(pid) = ?; ", verifyexist)
     if cursor.fetchone():
         new_id = randint(200,999)
         new_id = p_string + str(new_id)
@@ -186,7 +183,7 @@ def add_question(user):  # U query 1 '1. Post a question'
 
 
 def search_posts(user):  # U query 2 '2. Search for posts'
-    user = user.upper()
+    user = user.lower()
     kw_check = True
     keywords = ''
 
@@ -219,7 +216,7 @@ def search_posts(user):  # U query 2 '2. Search for posts'
         results = []
         for pid in pid_count:
             if pid[0] is not None:
-                cursor.execute('SELECT * FROM posts WHERE upper(pid)=?;', (pid[0].upper(),))  # fetches results
+                cursor.execute('SELECT * FROM posts WHERE lower(pid)=?;', (pid[0].lower(),))  # fetches results
                 results.append(cursor.fetchone())
         print_results(results, user)  # print results
 
@@ -249,7 +246,7 @@ def print_results(data, user):  # handle printing search results here
                 else:
                     valid_input = False
                     continue
-            elif user_input.lower() == '0':  # pressing 0 takes user back to main menu
+            elif user_input == '0':  # pressing 0 takes user back to main menu
                 valid_input = False
                 main_menu(user)
             else:
@@ -283,7 +280,7 @@ def add_answer(user, qpost):  # U query 3 '3. Post action-Answer'
     new_id = randint(200,999)
     new_id = 'p' + str(new_id)
     verifyexist = [new_id]
-    cursor.execute(" SELECT pid from posts WHERE upper(pid) = ?; ", verifyexist)
+    cursor.execute(" SELECT pid from posts WHERE lower(pid) = ?; ", verifyexist)
     if cursor.fetchone():
         new_id = randint(200,999)
         new_id = 'p' + str(new_id)
@@ -317,8 +314,8 @@ def add_vote(user, pid):  # U query 4 '4. Post action-Vote'
 
 
 def check_badge(badgename):  # checks if badge name is valid
-    badgeList = [badgename]
-    cursor.execute("SELECT bname from badges WHERE bname = ?;", badgeList)
+    badgeList = [badgename.lower()]
+    cursor.execute("SELECT bname from badges WHERE lower(bname) = ?;", badgeList)
     if cursor.fetchone():
         return True
     else:
@@ -340,13 +337,13 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
             cursor.execute("SELECT qid FROM answers WHERE lower(pid) = ?", answerList)
             postid = cursor.fetchone()
             postid = convertTuple(postid)
-            pidList = [postid.upper()]
+            pidList = [postid.lower()]
             cursor.execute("SELECT pid FROM answers WHERE lower(pid) = ?; ", answerList)
             if cursor.fetchone():
                 #check if the question associate with answer already has accepted answer
                 cursor.execute("""SELECT theaid FROM questions q
-                            WHERE upper(pid) = ? AND upper(theaid) != NULL""", pidList)
-                acceptedList = [answerid, postid[0]]
+                            WHERE lower(pid) = ? AND lower(theaid) != NULL""", pidList)
+                acceptedList = [answerid.lower(), postid[0].lower()]
                 if cursor.fetchone():
                     double_check = input("This question already has an accepted answer, would you like to overwrite it? (y/n): ")
                     if double_check.upper() == "Y":
@@ -361,8 +358,8 @@ def mark_as_accepted(user, aid):  # PU query 1 '1. Post action-Mark as the accep
                         print("Invalid Input. Please try again.\n")
                         continue
                 else:
-                    acceptedList = [answerid, postid[0]]
-                    cursor.execute("UPDATE questions SET theaid = ? WHERE pid = ?;", acceptedList)
+                    acceptedList = [answerid, postid[0].lower()]
+                    cursor.execute("UPDATE questions SET theaid = ? WHERE lowe(pid) = ?;", acceptedList)
                     conn.commit()
                     print("This post has been marked as the accepted answer.\n")
                     accepted_condition = False
@@ -387,11 +384,11 @@ def give_badge(user, pid):  # PU query 2 '2. Post action-Give a badge'
             badge_name = input("you inputted an incorrect badge name, please try again: ")
             continue
 
-    checkList = [pid.upper()]
-    cursor.execute(" SELECT poster from posts WHERE upper(pid) = ?;", checkList)
+    checkList = [pid.lower()]
+    cursor.execute(" SELECT poster from posts WHERE lower(pid) = ?;", checkList)
     poster = cursor.fetchone()
     poster = convertTuple(poster)
-    checkList = [poster, badge_name]
+    checkList = [poster.lower(), badge_name.lower()]
     cursor.execute(" INSERT OR REPLACE INTO ubadges (uid, bdate, bname) VALUES (?, date('now'), ?); ",checkList)
     conn.commit()
     print("badge succesfully added")
@@ -411,10 +408,10 @@ def add_tag(user, pid):  # PU query 3 '3. Post action-Add a tag'
             rows = cursor.fetchall()
             tag_duplicate = False
             for elem in rows:
-                if elem[0].upper() == new_tag.upper():
+                if elem[0].lower() == new_tag.lower():
                     tag_duplicate = True
                     new_tag = input("That tag already exists, try adding different one: ")
-        tagList = [pid, new_tag]
+        tagList = [pid.lower(), new_tag.lower()]
         cursor.execute("INSERT INTO tags VALUES (?, ?);", tagList)
         conn.commit()
         print("Tag added successfully\n")
@@ -426,26 +423,39 @@ def edit_post(user, pid):  # PU query 4 '4. Post Action-Edit'
         print("You are not allowed to use this function\n")
 
     else:  # change title and/or body of post
-        user_choice = input("Would you like to edit the title of this post? (Y) or (N) ")
-        if user_choice.upper() == 'Y':
-            new_title = input("What would you like the new title to be? ")
-            titleList = [new_title, pid]
-            cursor.execute(""" UPDATE posts 
+        edit_condition1 = True
+        while edit_condition1:
+            user_choice = input("Would you like to edit the title of this post? (Y) or (N) ")
+            if user_choice.upper() == 'Y':
+                new_title = input("What would you like the new title to be? ")
+                titleList = [new_title, pid]
+                cursor.execute(""" UPDATE posts 
                         SET title = ?
                         WHERE pid = ? ;""", titleList)
-            conn.commit()
-            print("Title changed successfully\n")
-
-        user_choice = input("Would you like to edit the body of this post? (Y) or (N) ")
-        if user_choice.upper() == 'Y':
-            new_body = input("What would you like the new body to be? ")
-            bodyList = [new_body, pid]
-            cursor.execute(""" UPDATE posts 
+                conn.commit()
+                print("Title changed successfully\n")
+                edit_condition1 = False
+            elif user_choice.upper() == 'N':
+                edit_condition1 = False
+            else:
+                print("wrong input try again")
+                continue
+        edit_condition2 = True
+        while edit_condition2:
+            user_choice = input("Would you like to edit the body of this post? (Y) or (N) ")
+            if user_choice.upper() == 'Y':
+                new_body = input("What would you like the new body to be? ")
+                bodyList = [new_body.lower(), pid.lower()]
+                cursor.execute(""" UPDATE posts 
                         SET body = ?
                         WHERE pid = ? ;""", bodyList)
-            conn.commit()
-            print("Body changed successfully\n")
-
+                conn.commit()
+                print("Body changed successfully\n")
+                edit_condition2 = False
+            elif user_choice.upper() == 'N':
+                edit_condition2 = False
+            else:
+                print("wrong input try again")
 
 def main():
     exit_condition = True
